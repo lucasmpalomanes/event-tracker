@@ -6,6 +6,7 @@ import {
   getEvent,
   getMembership,
   listAvailability,
+  listParticipants,
   listPendingRequests,
 } from "@/lib/events";
 import { holidaysInRange } from "@/lib/holidays";
@@ -18,6 +19,11 @@ import {
 } from "@/app/actions";
 import { Calendar, type CalendarMonth } from "./calendar";
 import { DeleteEventButton } from "./delete-event-button";
+import {
+  ClearVotesButton,
+  RemoveParticipantButton,
+  RemoveVoteButton,
+} from "./admin-remove-buttons";
 
 function formatDay(day: string) {
   const [y, m, d] = day.split("-");
@@ -96,14 +102,20 @@ export default async function EventPage({
 
   const availability = await listAvailability(id);
   const pendingRequests = user.is_admin ? await listPendingRequests(id) : [];
+  const participants = user.is_admin ? await listParticipants(event) : [];
   const holidays = holidaysInRange(event.window_start, event.window_end);
 
   const counts = new Map<string, number>();
-  const names = new Map<string, string[]>();
+  const voters = new Map<string, { userId: string; name: string }[]>();
+  const votesByUser = new Map<string, number>();
   const mine = new Set<string>();
   for (const entry of availability) {
     counts.set(entry.day, (counts.get(entry.day) ?? 0) + 1);
-    names.set(entry.day, [...(names.get(entry.day) ?? []), entry.userName]);
+    voters.set(entry.day, [
+      ...(voters.get(entry.day) ?? []),
+      { userId: entry.user_id, name: entry.userName },
+    ]);
+    votesByUser.set(entry.user_id, (votesByUser.get(entry.user_id) ?? 0) + 1);
     if (entry.user_id === user.id) mine.add(entry.day);
   }
 
@@ -120,6 +132,8 @@ export default async function EventPage({
     .slice(0, 10);
 
   const votingOpen = event.status === "open";
+  // Removal is allowed on open/closed events only (spec.md §5.3).
+  const canRemove = user.is_admin && event.status !== "finalized";
 
   return (
     <div className="flex flex-col flex-1 bg-zinc-50 font-sans dark:bg-black">
@@ -283,7 +297,27 @@ export default async function EventPage({
                         )}
                       </span>
                       <span className="text-xs text-zinc-500">
-                        {names.get(day)?.join(", ")}
+                        {canRemove
+                          ? voters.get(day)?.map((voter, i) => (
+                              <span
+                                key={voter.userId}
+                                className="inline-flex items-center"
+                              >
+                                {i > 0 && ", "}
+                                {voter.name}
+                                <RemoveVoteButton
+                                  eventId={event.id}
+                                  userId={voter.userId}
+                                  userName={voter.name}
+                                  day={day}
+                                  dayLabel={formatDay(day)}
+                                />
+                              </span>
+                            ))
+                          : voters
+                              .get(day)
+                              ?.map((voter) => voter.name)
+                              .join(", ")}
                       </span>
                     </div>
                     <span className="font-semibold text-black dark:text-zinc-50">
@@ -305,6 +339,62 @@ export default async function EventPage({
             )}
           </aside>
         </div>
+
+        {user.is_admin && (
+          <section className="flex flex-col gap-3 rounded-xl border border-black/[.08] bg-white p-4 dark:border-white/[.145] dark:bg-zinc-950">
+            <div className="flex items-baseline gap-2">
+              <h2 className="font-medium text-black dark:text-zinc-50">
+                Participants
+              </h2>
+              {!canRemove && (
+                <span className="text-xs text-zinc-500">
+                  finalized — read only
+                </span>
+              )}
+            </div>
+            <ul className="flex flex-col gap-2">
+              {participants.map((p) => {
+                const displayName = p.name ?? p.email;
+                const voteCount = votesByUser.get(p.userId) ?? 0;
+                return (
+                  <li
+                    key={p.userId}
+                    className="flex flex-wrap items-center gap-3 text-sm"
+                  >
+                    <span className="text-zinc-800 dark:text-zinc-200">
+                      {displayName}
+                      {p.isCreator && (
+                        <span className="ml-1 text-xs text-zinc-500">
+                          (creator)
+                        </span>
+                      )}
+                    </span>
+                    <span className="flex-1 text-xs text-zinc-500">
+                      {voteCount} {voteCount === 1 ? "vote" : "votes"}
+                    </span>
+                    {canRemove && (
+                      <>
+                        <ClearVotesButton
+                          eventId={event.id}
+                          userId={p.userId}
+                          userName={displayName}
+                          voteCount={voteCount}
+                        />
+                        {!p.isCreator && p.membershipId && (
+                          <RemoveParticipantButton
+                            eventId={event.id}
+                            membershipId={p.membershipId}
+                            userName={displayName}
+                          />
+                        )}
+                      </>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
       </main>
     </div>
   );

@@ -134,6 +134,63 @@ export async function listPendingRequests(
   }));
 }
 
+export type Participant = {
+  membershipId: string | null; // null for the implicitly-approved creator
+  userId: string;
+  name: string | null;
+  email: string;
+  isCreator: boolean;
+};
+
+// Approved members plus the event's creator (implicitly approved, spec.md §4),
+// for the admin participant list (spec.md §5.3).
+export async function listParticipants(event: EventRow): Promise<Participant[]> {
+  const supabase = createServerSupabaseClient();
+  const [{ data: members, error }, { data: creator, error: cError }] =
+    await Promise.all([
+      supabase
+        .from("event_memberships")
+        .select("id, user_id, users!user_id ( name, email )")
+        .eq("event_id", event.id)
+        .eq("status", "approved")
+        .order("requested_at"),
+      supabase
+        .from("users")
+        .select("id, name, email")
+        .eq("id", event.created_by)
+        .single(),
+    ]);
+  if (error || cError) {
+    throw new Error(
+      `Failed to list participants: ${(error ?? cError)!.message}`
+    );
+  }
+
+  const rows: Participant[] = (members ?? [])
+    .filter((row) => (row.user_id as string) !== event.created_by)
+    .map((row) => {
+      const u = row.users as unknown as { name: string | null; email: string };
+      return {
+        membershipId: row.id as string,
+        userId: row.user_id as string,
+        name: u?.name ?? null,
+        email: u?.email ?? "",
+        isCreator: false,
+      };
+    });
+
+  return [
+    {
+      membershipId: null,
+      userId: creator.id as string,
+      name: creator.name as string | null,
+      email: creator.email as string,
+      isCreator: true,
+    },
+    ...rows,
+  ];
+}
+
 export type AvailabilityEntry = {
   day: string;
   user_id: string;

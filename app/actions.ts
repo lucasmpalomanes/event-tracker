@@ -195,6 +195,94 @@ export async function decideMembership(
   revalidatePath("/");
 }
 
+// --- participant & vote removal (spec.md §5.3) ------------------------------
+
+// Removal is only allowed while the event is open or closed; a finalized
+// event's record is frozen.
+async function requireRemovableEvent(eventId: string) {
+  const event = await getEvent(eventId);
+  if (!event) throw new Error("Event not found");
+  if (event.status === "finalized") {
+    throw new Error("A finalized event cannot be changed");
+  }
+  return event;
+}
+
+export async function removeParticipant(eventId: string, membershipId: string) {
+  await requireAdmin();
+  const event = await requireRemovableEvent(eventId);
+
+  const supabase = createServerSupabaseClient();
+  const { data: membership, error: mError } = await supabase
+    .from("event_memberships")
+    .select("id, user_id, status")
+    .eq("id", membershipId)
+    .eq("event_id", eventId)
+    .maybeSingle();
+  if (mError) throw new Error(`Failed to load participant: ${mError.message}`);
+  if (!membership || membership.status !== "approved") {
+    throw new Error("Participant not found");
+  }
+  if (membership.user_id === event.created_by) {
+    throw new Error("The event's creator cannot be removed");
+  }
+
+  // Membership deletion does not cascade to votes (spec.md §4) — two
+  // explicit deletes, votes first so a failure never strands orphan votes.
+  const { error: vError } = await supabase
+    .from("availabilities")
+    .delete()
+    .eq("event_id", eventId)
+    .eq("user_id", membership.user_id);
+  if (vError) {
+    throw new Error(`Failed to remove participant's votes: ${vError.message}`);
+  }
+  const { error } = await supabase
+    .from("event_memberships")
+    .delete()
+    .eq("id", membershipId);
+  if (error) throw new Error(`Failed to remove participant: ${error.message}`);
+
+  revalidatePath(`/events/${eventId}`);
+  revalidatePath("/");
+}
+
+export async function clearUserVotes(eventId: string, userId: string) {
+  await requireAdmin();
+  await requireRemovableEvent(eventId);
+
+  const supabase = createServerSupabaseClient();
+  const { error } = await supabase
+    .from("availabilities")
+    .delete()
+    .eq("event_id", eventId)
+    .eq("user_id", userId);
+  if (error) throw new Error(`Failed to clear votes: ${error.message}`);
+
+  revalidatePath(`/events/${eventId}`);
+}
+
+export async function removeSingleVote(
+  eventId: string,
+  userId: string,
+  day: string
+) {
+  await requireAdmin();
+  if (!DAY_RE.test(day)) throw new Error("Invalid day");
+  await requireRemovableEvent(eventId);
+
+  const supabase = createServerSupabaseClient();
+  const { error } = await supabase
+    .from("availabilities")
+    .delete()
+    .eq("event_id", eventId)
+    .eq("user_id", userId)
+    .eq("day", day);
+  if (error) throw new Error(`Failed to remove vote: ${error.message}`);
+
+  revalidatePath(`/events/${eventId}`);
+}
+
 // --- availability ----------------------------------------------------------
 
 export async function toggleAvailability(eventId: string, day: string) {
