@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Event Tracker
 
-## Getting Started
+Pick the best date for a group event. An admin creates an event with a
+candidate date window; participants mark the days they're available on a
+calendar (weekends and Brazilian national holidays highlighted), and a live
+ranking shows the most-voted days so the admin can finalize one.
 
-First, run the development server:
+Full product spec: [`spec.md`](./spec.md).
+
+## Stack
+
+- [Next.js 16](https://nextjs.org) (App Router) · React 19 · TypeScript · Tailwind CSS 4
+- [Auth0](https://auth0.com) for authentication (`@auth0/nextjs-auth0`)
+- [Supabase](https://supabase.com) (Postgres) for storage — accessed
+  server-side only, with the secret key; no RLS (see spec §6)
+
+## Setup
+
+### 1. Supabase
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. In the SQL Editor, run [`supabase/schema.sql`](./supabase/schema.sql)
+   (choose "Run without RLS" if prompted — access control lives in the
+   server code, per spec §6).
+3. From **Project Settings → API**, copy the Project URL, publishable key,
+   and secret key.
+
+### 2. Auth0
+
+1. Create a **Regular Web Application** at [auth0.com](https://auth0.com).
+2. In its Settings, set:
+   - Allowed Callback URLs: `http://localhost:3000/auth/callback`
+   - Allowed Logout URLs: `http://localhost:3000`
+   - Allowed Web Origins: `http://localhost:3000`
+3. Copy the Domain, Client ID, and Client Secret.
+
+### 3. Environment
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local
+# fill in the values; generate AUTH0_SECRET with:
+openssl rand -hex 32
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 4. Run
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000), log in, then make your
+user an admin so you can create events:
 
-## Learn More
+```sql
+update users set is_admin = true where email = 'you@example.com';
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Project layout
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Path | Purpose |
+|---|---|
+| `spec.md` | Product spec — roles, data model, screens, decisions |
+| `supabase/schema.sql` | Database schema (run in Supabase SQL editor) |
+| `proxy.ts` | Auth0 session handling (Next 16's renamed middleware) |
+| `lib/dal.ts` | Auth gate: Auth0 session → Supabase user sync |
+| `lib/events.ts` | Event/membership/availability queries + access rules |
+| `lib/holidays.ts` | Brazilian national holidays, computed in-app |
+| `app/actions.ts` | All mutations (Server Actions, each re-checks auth) |
+| `app/page.tsx` | Event list with per-user membership state |
+| `app/events/new/` | Event creation (admin) |
+| `app/events/[id]/` | Date page: calendar, voting, ranking, admin controls |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Conventions
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+⚠️ This project pins a Next.js version with breaking changes from common
+conventions (e.g. `middleware.ts` → `proxy.ts`). Before writing code, check
+the guides in `node_modules/next/dist/docs/` — see [`AGENTS.md`](./AGENTS.md).
