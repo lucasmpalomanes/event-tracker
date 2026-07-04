@@ -14,7 +14,13 @@ const STATUS_LABEL: Record<EventListItem["status"], string> = {
   finalized: "Finalized",
 };
 
-function EventRow({ event, isAdmin }: { event: EventListItem; isAdmin: boolean }) {
+function EventRow({
+  event,
+  isAdmin,
+}: {
+  event: EventListItem;
+  isAdmin: boolean;
+}) {
   const canEnter = isAdmin || event.membership === "approved";
 
   const body = (
@@ -104,7 +110,7 @@ export default async function Home() {
     <div className="flex flex-col flex-1 bg-zinc-50 font-sans dark:bg-black">
       <header className="flex w-full items-center justify-between border-b border-black/[.08] px-8 py-4 dark:border-white/[.145]">
         <span className="font-semibold text-black dark:text-zinc-50">
-          Event Tracker
+          Gagasco
         </span>
         <div className="flex items-center gap-4 text-sm">
           <span className="text-zinc-600 dark:text-zinc-400">
