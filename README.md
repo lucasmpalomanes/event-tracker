@@ -71,6 +71,24 @@ update users set is_admin = true where email = 'you@example.com';
 | `app/events/new/` | Event creation (admin) |
 | `app/events/[id]/` | Date page: calendar, voting, ranking, admin controls |
 
+## Deployment (Vercel)
+
+Deployed as its own Vercel project at `https://gagasco.paloman.es`.
+
+1. Import the GitHub repo as a new Vercel project (framework: Next.js,
+   no build config changes needed).
+2. **Settings → Environment Variables**: add everything from
+   `.env.example`, with `APP_BASE_URL=https://gagasco.paloman.es`.
+3. **Settings → Domains**: add `gagasco.paloman.es` (DNS is automatic if
+   the apex domain is already on Vercel).
+4. In Auth0, append the production URLs to the existing localhost ones
+   (comma-separated):
+   - Allowed Callback URLs: `https://gagasco.paloman.es/auth/callback`
+   - Allowed Logout URLs: `https://gagasco.paloman.es`
+   - Allowed Web Origins: `https://gagasco.paloman.es`
+
+Supabase needs no changes — it is only accessed server-side.
+
 ## Conventions
 
 ⚠️ This project pins a Next.js version with breaking changes from common
