@@ -1,7 +1,24 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { setAutoApprove } from "@/app/actions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function AutoApproveToggle({
   eventId,
@@ -12,31 +29,72 @@ export function AutoApproveToggle({
   enabled: boolean;
   pendingCount: number;
 }) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  function handleClick() {
-    if (!enabled && pendingCount > 0) {
-      const ok = window.confirm(
-        `Turning on auto-approve will also approve the ${pendingCount} pending request${
-          pendingCount > 1 ? "s" : ""
-        } right now. Continue?`
-      );
-      if (!ok) return;
-    }
+  function apply(next: boolean) {
     startTransition(async () => {
-      await setAutoApprove(eventId, !enabled);
+      await setAutoApprove(eventId, next);
     });
   }
 
+  function handleCheckedChange(checked: boolean) {
+    // Turning it on also approves everything pending — confirm first
+    // (specs/spec.md §4, auto-approval).
+    if (checked && pendingCount > 0) {
+      setConfirmOpen(true);
+      return;
+    }
+    apply(checked);
+  }
+
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={isPending}
-      title="When on, anyone who asks to enter gets access immediately"
-      className="rounded-full border border-black/[.08] px-3 py-1 text-xs transition-colors hover:bg-black/[.04] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
-    >
-      {isPending ? "Saving…" : `Auto-approve: ${enabled ? "on" : "off"}`}
-    </button>
+    <div className="flex items-center gap-2">
+      <Switch
+        id={`auto-approve-${eventId}`}
+        size="sm"
+        checked={enabled}
+        disabled={isPending}
+        onCheckedChange={handleCheckedChange}
+      />
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Label
+              htmlFor={`auto-approve-${eventId}`}
+              className="text-xs text-muted-foreground"
+            />
+          }
+        >
+          Auto-approve
+        </TooltipTrigger>
+        <TooltipContent>
+          When on, anyone who asks to enter gets access immediately
+        </TooltipContent>
+      </Tooltip>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Turn on auto-approve?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Turning on auto-approve will also approve the {pendingCount}{" "}
+              pending request{pendingCount > 1 ? "s" : ""} right now. Continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmOpen(false);
+                apply(true);
+              }}
+            >
+              Turn on
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 }

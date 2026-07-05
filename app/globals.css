@@ -58,6 +58,8 @@
   --color-weekend: var(--weekend);
   --color-weekend-foreground: var(--weekend-foreground);
   --color-available: var(--available);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
 }
 
 :root {
@@ -100,6 +102,9 @@
   --weekend: oklch(0.951 0.026 236.824);
   --weekend-foreground: oklch(0.5 0.134 242.749);
   --available: oklch(0.723 0.219 149.579);
+  /* Pending-request highlights (amber wash). */
+  --warning: oklch(0.962 0.059 95.617);
+  --warning-foreground: oklch(0.473 0.137 46.201);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -140,6 +145,8 @@
   --weekend: oklch(0.293 0.066 243.157);
   --weekend-foreground: oklch(0.746 0.16 232.661);
   --available: oklch(0.792 0.209 151.711);
+  --warning: oklch(0.279 0.077 45.635);
+  --warning-foreground: oklch(0.924 0.12 95.746);
   }
 }
 
