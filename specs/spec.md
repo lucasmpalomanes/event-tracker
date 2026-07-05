@@ -1,7 +1,7 @@
 # Event Tracker — Specification
 
 **Status:** Draft v1
-**Last updated:** 2026-07-04
+**Last updated:** 2026-07-05
 
 ## 1. Overview
 
@@ -216,6 +216,10 @@ this page; anyone else is redirected back to the list with their request status.
   specific date (typically the top-ranked one).
 - Note: **finalizing is one-way** in v1 — a `finalized` event cannot be
   re-opened.
+- Closing and finalizing both ask for a **confirmation** before firing
+  *(added 2026-07-05)*: they end live voting, so a stray click shouldn't do
+  it. Closing's confirmation notes voting can be reopened; finalizing's says
+  it cannot be undone. Reopening needs no confirmation.
 
 ### 5.3 Participant & vote removal (admin)
 

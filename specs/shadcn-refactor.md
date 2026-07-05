@@ -21,7 +21,11 @@ the two can't drift.
 
 This is a **behavior-preserving refactor**: every screen, state, and flow in
 [`spec.md` §5](./spec.md#5-screens) must work exactly as before. Only the
-presentation layer changes.
+presentation layer changes — with **one deliberate exception**: two admin
+actions that today fire immediately, **"Pick" (finalize a date)** and
+**"Close voting"**, are reclassified as destructive and gain a confirmation
+dialog (see [§5.3](#53-date-page-appeventsidpagetsx)). That decision is
+recorded in the product spec ([`spec.md` §5.2](./spec.md#52-date-page)).
 
 ## 2. Goals & non-goals
 
@@ -30,7 +34,7 @@ presentation layer changes.
   preset's design tokens — no more ad-hoc `border-black/[.08] dark:border-white/[.145]`
   utility soup repeated across files.
 - Replace `window.confirm()` with a proper `AlertDialog` for every destructive
-  action (participant/vote removal, event deletion, auto-approve warning).
+  action (participant/vote removal, event deletion, auto-approve warning, picking the final date, closing the event).
 - Consistent dark mode driven by the preset's CSS variables instead of
   per-element `dark:` overrides.
 - Shared components live in `components/` (per `components.json` aliases);
@@ -40,7 +44,9 @@ presentation layer changes.
 - No redesign: layout, information architecture, and copy stay as they are.
   Visual changes are limited to what adopting the preset's tokens implies.
 - No new features, no server/action/data-layer changes (`app/actions.ts`,
-  `lib/*`, `supabase/*` are untouched except comment path updates).
+  `lib/*`, `supabase/*` are untouched except comment path updates). The new
+  finalize/close confirmations are client-side only — the server actions
+  (`finalizeEvent`, `closeVoting`) don't change.
 - No theme toggle UI. Dark mode remains driven by `prefers-color-scheme`
   (see [§6 Dark mode](#6-dark-mode)).
 - Not replacing the custom voting calendar with shadcn's `Calendar`
@@ -93,6 +99,7 @@ Components needed (add in phase 0 or as each screen needs them):
 | White bordered boxes (`rounded-xl border … bg-white dark:bg-zinc-950`) | event rows, ranking items, participants panel, pending-requests panel | `Card` (with `CardHeader`/`CardContent` where the box has a heading) |
 | Form fields (`inputClass` in `app/events/new/page.tsx`, edit-details form) | new-event + date page | `Input`, `Textarea`, `Label`, `Checkbox` |
 | `window.confirm()` | `delete-event-button.tsx`, `admin-remove-buttons.tsx` (×3), `auto-approve-toggle.tsx` | `AlertDialog` with the same warning copy, destructive-styled confirm button |
+| Unconfirmed destructive form submits | "Pick" (finalize) and "Close voting" on the date page | **new** `AlertDialog` confirmations — see [§5.3](#53-date-page-appeventsidpagetsx); the only intentional behavior change in this refactor |
 | `title=` attribute hints (holiday names, auto-approve explainer, remove-vote) | date page | `Tooltip` (keep `title`/`aria-label` as fallback where the trigger is disabled) |
 | Raw `text-zinc-*` / `text-black dark:text-zinc-50` colors | everywhere | semantic tokens: `text-foreground`, `text-muted-foreground`, `bg-background`, `bg-card`, `border-border`, `bg-destructive`, etc. |
 
@@ -114,9 +121,13 @@ Components needed (add in phase 0 or as each screen needs them):
   form inside (`Label` + `Textarea` + `Input` + `Button`).
 - Pending access requests panel: `Card` with warning-toned styling; per-row
   Approve (`Button size="sm"`) / Reject (`Button size="sm" variant="outline"`).
-- Admin control strip: Close/Reopen voting → small `outline` `Button`s (still
-  form submits); Delete event → `Button variant="destructive"` opening an
-  `AlertDialog` (replaces `window.confirm` in `delete-event-button.tsx`).
+- Admin control strip: **Close voting** → small `outline` `Button` opening an
+  `AlertDialog` (**new** — today it submits immediately). Suggested copy:
+  "Close voting for \"{title}\"? Participants can no longer change their
+  availability. You can reopen voting later." **Reopen voting** stays an
+  unconfirmed form submit — it is the reversible, non-destructive direction.
+  Delete event → `Button variant="destructive"` opening an `AlertDialog`
+  (replaces `window.confirm` in `delete-event-button.tsx`).
 - Auto-approve toggle (`auto-approve-toggle.tsx`): becomes `Switch` + `Label`.
   When switching **on** with pending requests, an `AlertDialog` carries the
   current warning copy ("will also approve the N pending requests…") before
@@ -125,8 +136,12 @@ Components needed (add in phase 0 or as each screen needs them):
   fires directly (same as today).
 - Ranking panel: each day → `Card` row (or a single `Card` with `Separator`s);
   holiday annotation keeps its accent color via a token-based class; "Pick" →
-  small `outline` `Button`; per-voter remove "×" → `Button variant="ghost"
-  size="icon"` wrapped in the shared confirm `AlertDialog`.
+  small `outline` `Button` opening an `AlertDialog` (**new** — today it
+  submits immediately). Finalizing is **one-way** (spec §5.2), so the copy
+  must say so; suggested: "Finalize {date} for \"{title}\"? Voting ends and
+  the event cannot be reopened. This cannot be undone." Per-voter remove "×"
+  → `Button variant="ghost" size="icon"` wrapped in the shared confirm
+  `AlertDialog`.
 - Participants panel: `Card`; "Clear votes" → `outline` `Button`, "Remove" →
   `destructive`-outline `Button`, both with `AlertDialog` confirmation
   (replaces `admin-remove-buttons.tsx`'s three `window.confirm`s; copy is
@@ -164,8 +179,11 @@ it into a picker abstraction would fight the component. Instead:
 - App-level shared components: `components/` — `voting-calendar.tsx`,
   `confirm-action-button.tsx` (a reusable "button + AlertDialog + pending
   state + server-action call" wrapper that replaces `delete-event-button.tsx`,
-  `admin-remove-buttons.tsx`, and the confirm path of the auto-approve
-  switch), and anything else used by more than one route.
+  `admin-remove-buttons.tsx`, the confirm path of the auto-approve switch,
+  and the new finalize/close-voting confirmations — note these last two are
+  currently plain `<form action=…>` submits in a server component, so
+  adopting the wrapper also makes them client-triggered action calls), and
+  anything else used by more than one route.
 - Route-private composition (e.g. `EventRow`) may stay next to its page.
 
 ## 6. Dark mode
@@ -181,14 +199,19 @@ pick up dark values automatically. A user-facing theme toggle is future work.
 
 - `npm run build` and `npm run lint` pass.
 - No `window.confirm` remains; every destructive action shows an `AlertDialog`
-  with the previous warning copy before firing its server action.
+  before firing its server action — with the previous warning copy for the
+  actions that already confirmed, and the new copy from
+  [§5.3](#53-date-page-appeventsidpagetsx) for "Pick" (finalize) and
+  "Close voting". Cancelling any dialog fires nothing.
 - No raw palette classes (`zinc-*`, `bg-black`, hex values) in app components
   except the calendar/legend accent utilities defined in `globals.css`;
   everything else uses preset tokens.
 - Manual pass over spec §5 flows in light **and** dark mode: logged-out hero,
   event list in all four membership states, request/join, pending-request
   approve/reject, availability toggling with optimistic update, ranking +
-  finalize, auto-approve on/off (with and without pending requests),
+  finalize (confirm and cancel the new dialog), close voting (confirm and
+  cancel) + reopen (no dialog), auto-approve on/off (with and without
+  pending requests),
   participant removal / clear votes / single-vote removal, event
   create/edit/delete, closed & finalized read-only states.
 - Server actions, `lib/`, and `supabase/` diffs are empty (comment-only
