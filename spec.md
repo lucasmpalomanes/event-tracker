@@ -35,7 +35,7 @@ is intentionally **out of scope** for this version — see [§9 Future work](#9-
 
 | Role | Can do |
 |------|--------|
-| **Admin** | Create, edit, and delete events. **Approve/reject who may enter an event.** **Remove a participant from an event (their votes go with them) or remove individual votes** (see [§5.3](#53-participant--vote-removal-admin)). Open/close voting. Finalize the chosen date. Everything a participant can do. |
+| **Admin** | Create, edit, and delete events. **Approve/reject who may enter an event**, or enable **auto-approval** per event. **Remove a participant from an event (their votes go with them) or remove individual votes** (see [§5.3](#53-participant--vote-removal-admin)). Open/close voting. Finalize the chosen date. Everything a participant can do. |
 | **Participant** (any logged-in user) | Browse the full event list, request to enter an event, and — once approved — mark/update their own availability and view the ranking. |
 | **Anonymous visitor** | See the main page (event list is gated or teased) and the login entry point only. |
 
@@ -44,8 +44,10 @@ Admin status is a flag on the user record (`users.is_admin`). Event creation is
 
 **Visibility vs. access.** Every logged-in user can *see* all events in the
 list. *Entering* an event (viewing its date page, marking availability) requires
-an **approved membership** — the user requests to enter and an admin approves.
-See [`event_memberships`](#event_memberships) and [§5](#5-screens).
+an **approved membership** — the user requests to enter and an admin approves,
+unless the event has **auto-approve** enabled, in which case the request is
+approved on the spot. See [`event_memberships`](#event_memberships),
+[auto-approval](#auto-approving-new-members) and [§5](#5-screens).
 
 ## 4. Key concepts / data model
 
@@ -70,6 +72,9 @@ Mirror of Auth0 identities, synced on first login.
 - `window_end` (date) — last selectable day of the candidate range
 - `status` (enum: `open` | `closed` | `finalized`)
 - `finalized_date` (date, nullable) — set when status = `finalized`
+- `auto_approve_members` (bool, default **false**) — when true, new entry
+  requests are approved automatically (see
+  [auto-approval](#auto-approving-new-members))
 - `created_at`, `updated_at`
 - **Validation:** `window_end >= window_start` and the span
   `window_end - window_start` **must not exceed 6 months**.
@@ -98,6 +103,38 @@ row — so the (`event_id`, `user_id`) uniqueness holds.
 (not flipped to `rejected`), and the user's `availabilities` for that event are
 deleted in the same operation. A removed user sees the event as "no membership"
 and may request to enter again like anyone else — removal is not a ban.
+
+#### Auto-approving new members
+
+Each event has an `auto_approve_members` flag (per-event granularity; there is
+no global setting). Default is **false** — manual approval, today's behavior.
+
+**When the flag is ON:**
+- A **first-time** entry request is created directly with `status = approved`.
+  For such rows, `decided_at = requested_at` and `decided_by` is **null** —
+  a null `decided_by` on an approved row is how the system marks "approved
+  automatically" (manual decisions always record the deciding admin).
+- The requesting user gets access immediately: the list row links through to
+  the date page with no "awaiting approval" interstitial.
+- **Exception — previously rejected users:** a re-request from a user whose
+  membership is `rejected` goes to `pending` for manual review, even with the
+  flag on. A rejection is an explicit admin decision and auto-approve does not
+  override it. (A **removed** participant is different: removal deletes the
+  row, so their re-request counts as first-time and **is** auto-approved —
+  consistent with "removal is not a ban" above.)
+- The flag applies to any non-deleted event **regardless of `status`**
+  (`open`, `closed`, or `finalized`): entering only grants access to view the
+  page/ranking, and voting rights are already governed by event status.
+
+**Toggling:**
+- Only an admin can set the flag, at event creation or any time after, from the
+  event's admin controls ([§5.2](#52-date-page)).
+- Turning the flag **ON** also **immediately approves all currently `pending`
+  requests** for that event (these are recorded as auto-approvals:
+  `decided_at = now()`, `decided_by = null`). The UI states this before the
+  admin confirms.
+- Turning the flag **OFF** only affects future requests; memberships already
+  approved (manually or automatically) are untouched.
 
 ### `availabilities`
 One row per (user, event, day) that a user marks as available.
@@ -130,7 +167,10 @@ simply disappears from the ranking.
 - **Logged in:** list of **all** events, each showing title, date window, status,
   and (if finalized) the chosen date. Each row reflects the viewer's membership
   state:
-  - No membership → "Request to enter" action.
+  - No membership → "Request to enter" action. On an event with
+    [auto-approval](#auto-approving-new-members) enabled this approves
+    instantly and the row becomes a link to the date page (optionally labeled
+    "Join" instead of "Request to enter" to set expectations).
   - `pending` → shows "Awaiting approval" (no entry yet).
   - `approved` → row links through to the date page.
   - `rejected` → shown as not accessible, with a "Request again" action that
@@ -166,6 +206,10 @@ this page; anyone else is redirected back to the list with their request status.
 
 **Admin controls (on this page, admin only)**
 - Review **pending access requests** and approve/reject them.
+- Toggle **auto-approve new members** for this event (also settable on the
+  event creation form, default off). Turning it on warns that all currently
+  pending requests will be approved, then approves them (see
+  [auto-approval](#auto-approving-new-members)).
 - **Manage participants and votes** — remove a participant (and their votes) or
   remove individual votes; see [§5.3](#53-participant--vote-removal-admin).
 - Close voting (reversible — a `closed` event can be reopened), and finalize a
@@ -248,6 +292,13 @@ there, or delete stray/mistaken votes without kicking anyone.
 - **Holiday source:** Brazilian national holidays are **computed in-app** (fixed
   dates + Easter-derived movable feasts), no external API.
 
+- **Auto-approving new members** *(added 2026-07-04)*: per-event flag
+  (`events.auto_approve_members`), **off by default** for new events. Enabling
+  it **retroactively approves** that event's pending requests; a previously
+  **rejected** user who re-requests still goes to `pending` even with the flag
+  on; the flag applies to any non-deleted event **regardless of status**
+  (open/closed/finalized). Auto-approvals are recorded with
+  `decided_by = null`. See [auto-approval](#auto-approving-new-members).
 - **Participant/vote removal (added 2026-07-04):** admins can remove a
   participant from an event or remove votes ([§5.3](#53-participant--vote-removal-admin)).
   Removing a participant **deletes** their membership row and their votes (not a
@@ -255,7 +306,6 @@ there, or delete stray/mistaken votes without kicking anyone.
   and per-vote (single user+day) granularity. Allowed on `open` and `closed`
   events only; `finalized` events are frozen. Hard deletes, no notification to
   the affected user.
-
 - **Notifying an approved user:** no in-app notifications in v1. For the current
   scope (a closed friends group) the admin messages people out-of-band; a user
   otherwise learns of approval by revisiting the list. In-app notifications are

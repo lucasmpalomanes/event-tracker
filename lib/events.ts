@@ -15,6 +15,7 @@ export type EventRow = {
   window_end: string;
   status: EventStatus;
   finalized_date: string | null;
+  auto_approve_members: boolean;
 };
 
 export type MembershipRow = {
@@ -53,7 +54,7 @@ export async function listEvents(user: AppUser): Promise<EventListItem[]> {
       supabase
         .from("events")
         .select(
-          "id, created_by, title, description, location, window_start, window_end, status, finalized_date"
+          "id, created_by, title, description, location, window_start, window_end, status, finalized_date, auto_approve_members"
         )
         .order("created_at", { ascending: false }),
       supabase
@@ -85,7 +86,7 @@ export async function getEvent(eventId: string): Promise<EventRow | null> {
   const { data, error } = await supabase
     .from("events")
     .select(
-      "id, created_by, title, description, location, window_start, window_end, status, finalized_date"
+      "id, created_by, title, description, location, window_start, window_end, status, finalized_date, auto_approve_members"
     )
     .eq("id", eventId)
     .maybeSingle();
