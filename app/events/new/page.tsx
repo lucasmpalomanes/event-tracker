@@ -59,6 +59,20 @@ export default async function NewEventPage() {
           <p className="text-xs text-zinc-500">
             The window may span at most 6 months.
           </p>
+          <label className="flex items-start gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <input
+              name="auto_approve_members"
+              type="checkbox"
+              className="mt-0.5"
+            />
+            <span>
+              Auto-approve new members
+              <span className="block text-xs text-zinc-500">
+                Anyone who asks to enter gets access immediately, without
+                waiting for your approval. You can change this later.
+              </span>
+            </span>
+          </label>
           <button className="mt-2 h-11 rounded-full bg-black font-medium text-white transition-colors hover:bg-[#383838] dark:bg-zinc-50 dark:text-black dark:hover:bg-[#ccc]">
             Create event
           </button>

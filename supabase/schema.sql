@@ -29,12 +29,18 @@ create table if not exists events (
   status text not null default 'open'
     check (status in ('open', 'closed', 'finalized')),
   finalized_date date,
+  auto_approve_members boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint events_window_valid check (window_end >= window_start),
   constraint events_window_max_6_months
     check (window_end <= window_start + interval '6 months')
 );
+
+-- Upgrade path for databases created before auto-approve existed
+-- (create table if not exists above won't add the column).
+alter table events
+  add column if not exists auto_approve_members boolean not null default false;
 
 -- event_memberships ---------------------------------------------------------
 -- Controls who may enter an event. One row per (user, event) once requested.

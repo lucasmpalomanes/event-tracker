@@ -16,6 +16,7 @@ import {
   reopenVoting,
   updateEventDetails,
 } from "@/app/actions";
+import { AutoApproveToggle } from "./auto-approve-toggle";
 import { Calendar, type CalendarMonth } from "./calendar";
 import { DeleteEventButton } from "./delete-event-button";
 
@@ -222,6 +223,11 @@ export default async function EventPage({
               </h2>
               {user.is_admin && (
                 <div className="flex items-center gap-2">
+                  <AutoApproveToggle
+                    eventId={event.id}
+                    enabled={event.auto_approve_members}
+                    pendingCount={pendingRequests.length}
+                  />
                   {votingOpen && (
                     <form action={closeVoting.bind(null, event.id)}>
                       <button className="rounded-full border border-black/[.08] px-3 py-1 text-xs hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]">

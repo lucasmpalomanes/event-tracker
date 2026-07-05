@@ -60,8 +60,10 @@ function EventRow({
 
       {!canEnter && event.membership === null && (
         <form action={requestAccess.bind(null, event.id)}>
+          {/* Auto-approve events grant access on the spot, so the button
+              reads "Join" to set expectations (spec.md §5.1). */}
           <button className="rounded-full bg-black px-4 py-1.5 text-sm text-white transition-colors hover:bg-[#383838] dark:bg-zinc-50 dark:text-black dark:hover:bg-[#ccc]">
-            Request to enter
+            {event.auto_approve_members ? "Join" : "Request to enter"}
           </button>
         </form>
       )}

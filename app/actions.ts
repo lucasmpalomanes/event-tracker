@@ -55,6 +55,7 @@ export async function createEvent(formData: FormData) {
       location: location || null,
       window_start: windowStart,
       window_end: windowEnd,
+      auto_approve_members: formData.get("auto_approve_members") === "on",
     })
     .select("id")
     .single();
@@ -149,13 +150,28 @@ export async function finalizeEvent(eventId: string, day: string) {
 
 export async function requestAccess(eventId: string) {
   const user = await requireUser();
+  const event = await getEvent(eventId);
+  if (!event) throw new Error("Event not found");
   const existing = await getMembership(eventId, user.id);
 
   const supabase = createServerSupabaseClient();
   if (!existing) {
-    const { error } = await supabase
-      .from("event_memberships")
-      .insert({ event_id: eventId, user_id: user.id });
+    // With auto-approve on, a first-time request is approved on the spot.
+    // decided_by stays null — that's how auto-approvals are recorded
+    // (spec.md §4). A rejected user's re-request below is NOT auto-approved:
+    // a rejection is an explicit admin decision.
+    const now = new Date().toISOString();
+    const { error } = await supabase.from("event_memberships").insert(
+      event.auto_approve_members
+        ? {
+            event_id: eventId,
+            user_id: user.id,
+            status: "approved",
+            requested_at: now,
+            decided_at: now,
+          }
+        : { event_id: eventId, user_id: user.id }
+    );
     if (error) throw new Error(`Failed to request access: ${error.message}`);
   } else if (existing.status === "rejected") {
     // Re-requesting flips the row back to pending (spec.md §4).
@@ -192,6 +208,42 @@ export async function decideMembership(
     .maybeSingle();
   if (error) throw new Error(`Failed to decide membership: ${error.message}`);
   if (data) revalidatePath(`/events/${data.event_id}`);
+  revalidatePath("/");
+}
+
+export async function setAutoApprove(eventId: string, enabled: boolean) {
+  await requireAdmin();
+  const supabase = createServerSupabaseClient();
+
+  const { error } = await supabase
+    .from("events")
+    .update({
+      auto_approve_members: enabled,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", eventId);
+  if (error) throw new Error(`Failed to update auto-approve: ${error.message}`);
+
+  // Turning the flag on also approves everything currently pending,
+  // recorded as auto-approvals (decided_by = null, spec.md §4).
+  if (enabled) {
+    const { error: approveError } = await supabase
+      .from("event_memberships")
+      .update({
+        status: "approved",
+        decided_at: new Date().toISOString(),
+        decided_by: null,
+      })
+      .eq("event_id", eventId)
+      .eq("status", "pending");
+    if (approveError) {
+      throw new Error(
+        `Auto-approve is on, but approving the pending requests failed: ${approveError.message}`
+      );
+    }
+  }
+
+  revalidatePath(`/events/${eventId}`);
   revalidatePath("/");
 }
 
