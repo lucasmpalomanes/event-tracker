@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ArrowLeftIcon } from "lucide-react";
 import { getCurrentUser } from "@/lib/dal";
 import { createEvent } from "@/app/actions";
-
-const inputClass =
-  "rounded-lg border border-black/[.08] bg-white px-3 py-2 text-black dark:border-white/[.145] dark:bg-zinc-950 dark:text-zinc-50";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export default async function NewEventPage() {
   const user = await getCurrentUser();
@@ -12,70 +15,69 @@ export default async function NewEventPage() {
   if (!user.is_admin) redirect("/");
 
   return (
-    <div className="flex flex-col flex-1 bg-zinc-50 font-sans dark:bg-black">
+    <div className="flex flex-col flex-1">
       <main className="mx-auto flex w-full max-w-xl flex-col gap-6 px-8 py-12">
-        <Link
-          href="/"
-          className="text-sm text-zinc-600 hover:underline dark:text-zinc-400"
+        <Button
+          variant="ghost"
+          size="sm"
+          className="self-start text-muted-foreground"
+          nativeButton={false}
+          render={<Link href="/" />}
         >
-          ← Back to events
-        </Link>
-        <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
-          Create event
-        </h1>
+          <ArrowLeftIcon data-icon="inline-start" />
+          Back to events
+        </Button>
+        <h1 className="text-2xl font-semibold tracking-tight">Create event</h1>
         <form action={createEvent} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Title
-            <input name="title" required className={inputClass} />
-          </label>
-          <label className="flex flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Description (optional)
-            <textarea name="description" rows={3} className={inputClass} />
-          </label>
-          <label className="flex flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Location (optional)
-            <input name="location" className={inputClass} />
-          </label>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="title">Title</Label>
+            <Input id="title" name="title" required />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="description">Description (optional)</Label>
+            <Textarea id="description" name="description" rows={3} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="location">Location (optional)</Label>
+            <Input id="location" name="location" />
+          </div>
           <div className="flex gap-4">
-            <label className="flex flex-1 flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-400">
-              First candidate day
-              <input
+            <div className="flex flex-1 flex-col gap-2">
+              <Label htmlFor="window_start">First candidate day</Label>
+              <Input
+                id="window_start"
                 name="window_start"
                 type="date"
                 required
-                className={inputClass}
               />
-            </label>
-            <label className="flex flex-1 flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-400">
-              Last candidate day
-              <input
-                name="window_end"
-                type="date"
-                required
-                className={inputClass}
-              />
-            </label>
+            </div>
+            <div className="flex flex-1 flex-col gap-2">
+              <Label htmlFor="window_end">Last candidate day</Label>
+              <Input id="window_end" name="window_end" type="date" required />
+            </div>
           </div>
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-muted-foreground">
             The window may span at most 6 months.
           </p>
-          <label className="flex items-start gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-            <input
+          <div className="flex items-start gap-2">
+            <Checkbox
+              id="auto_approve_members"
               name="auto_approve_members"
-              type="checkbox"
               className="mt-0.5"
             />
-            <span>
-              Auto-approve new members
-              <span className="block text-xs text-zinc-500">
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="auto_approve_members">
+                Auto-approve new members
+              </Label>
+              <p className="text-xs text-muted-foreground">
                 Anyone who asks to enter gets access immediately, without
                 waiting for your approval. You can change this later.
-              </span>
-            </span>
-          </label>
-          <button className="mt-2 h-11 rounded-full bg-black font-medium text-white transition-colors hover:bg-[#383838] dark:bg-zinc-50 dark:text-black dark:hover:bg-[#ccc]">
+              </p>
+            </div>
+          </div>
+          <Button type="submit" size="lg" className="mt-2">
             Create event
-          </button>
+          </Button>
         </form>
       </main>
     </div>

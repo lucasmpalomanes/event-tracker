@@ -1,7 +1,7 @@
--- Event Tracker schema — mirrors spec.md §4.
+-- Event Tracker schema — mirrors specs/spec.md §4.
 -- Run this in the Supabase SQL editor (or as a migration).
 -- RLS is intentionally left disabled: all access goes through
--- server-side code that resolves the Auth0 user first (see spec.md §6).
+-- server-side code that resolves the Auth0 user first (see specs/spec.md §6).
 
 create extension if not exists "pgcrypto";
 

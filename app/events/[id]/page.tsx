@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ArrowLeftIcon } from "lucide-react";
 import { getCurrentUser } from "@/lib/dal";
 import {
   canEnterEvent,
@@ -11,20 +12,33 @@ import {
 } from "@/lib/events";
 import { holidaysInRange } from "@/lib/holidays";
 import {
+  clearUserVotes,
   closeVoting,
   decideMembership,
+  deleteEvent,
   finalizeEvent,
+  removeParticipant,
+  removeSingleVote,
   reopenVoting,
   updateEventDetails,
 } from "@/app/actions";
 import { AutoApproveToggle } from "./auto-approve-toggle";
-import { Calendar, type CalendarMonth } from "./calendar";
-import { DeleteEventButton } from "./delete-event-button";
+import { ConfirmActionButton } from "@/components/confirm-action-button";
 import {
-  ClearVotesButton,
-  RemoveParticipantButton,
-  RemoveVoteButton,
-} from "./admin-remove-buttons";
+  VotingCalendar,
+  type CalendarMonth,
+} from "@/components/voting-calendar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 function formatDay(day: string) {
   const [y, m, d] = day.split("-");
@@ -32,18 +46,28 @@ function formatDay(day: string) {
 }
 
 // Build one grid per calendar month covered by the window. Days outside
-// the window are rendered but non-interactive (spec.md §5.2).
+// the window are rendered but non-interactive (specs/spec.md §5.2).
 function buildMonths(
   windowStart: string,
   windowEnd: string,
   holidays: Map<string, string>,
   counts: Map<string, number>,
-  mine: Set<string>
+  mine: Set<string>,
 ): CalendarMonth[] {
   const months: CalendarMonth[] = [];
   const MONTH_NAMES = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   let year = Number(windowStart.slice(0, 4));
@@ -58,7 +82,7 @@ function buildMonths(
     const cells = [];
     for (let dom = 1; dom <= daysInMonth; dom++) {
       const day = `${year}-${String(month).padStart(2, "0")}-${String(
-        dom
+        dom,
       ).padStart(2, "0")}`;
       const weekday = new Date(`${day}T00:00:00Z`).getUTCDay();
       cells.push({
@@ -125,7 +149,7 @@ export default async function EventPage({
     event.window_end,
     holidays,
     counts,
-    mine
+    mine,
   );
 
   const ranking = [...counts.entries()]
@@ -133,104 +157,120 @@ export default async function EventPage({
     .slice(0, 10);
 
   const votingOpen = event.status === "open";
-  // Removal is allowed on open/closed events only (spec.md §5.3).
+  // Removal is allowed on open/closed events only (specs/spec.md §5.3).
   const canRemove = user.is_admin && event.status !== "finalized";
 
   return (
-    <div className="flex flex-col flex-1 bg-zinc-50 font-sans dark:bg-black">
+    <div className="flex flex-col flex-1">
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-8 py-12">
         <div className="flex flex-col gap-2">
-          <Link
-            href="/"
-            className="text-sm text-zinc-600 hover:underline dark:text-zinc-400"
+          <Button
+            variant="ghost"
+            size="sm"
+            className="self-start text-muted-foreground"
+            nativeButton={false}
+            render={<Link href="/" />}
           >
-            ← Back to events
-          </Link>
+            <ArrowLeftIcon data-icon="inline-start" />
+            Back to events
+          </Button>
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
+            <h1 className="text-2xl font-semibold tracking-tight">
               {event.title}
             </h1>
-            <span className="rounded-full border border-black/[.08] px-2 py-0.5 text-xs text-zinc-600 dark:border-white/[.145] dark:text-zinc-400">
+            <Badge variant="outline">
               {event.status === "open"
                 ? "Voting open"
                 : event.status === "closed"
                   ? "Voting closed"
                   : `Finalized: ${formatDay(event.finalized_date!)}`}
-            </span>
+            </Badge>
           </div>
           {event.description && (
-            <p className="text-zinc-600 dark:text-zinc-400">
-              {event.description}
-            </p>
+            <p className="text-muted-foreground">{event.description}</p>
           )}
           {event.location && (
-            <p className="text-sm text-zinc-500">📍 {event.location}</p>
+            <p className="text-sm text-muted-foreground">📍 {event.location}</p>
           )}
           {user.is_admin && (
-            <details className="group mt-1">
-              <summary className="cursor-pointer text-sm text-zinc-500 hover:underline">
-                Edit details
-              </summary>
-              <form
-                action={updateEventDetails.bind(null, event.id)}
-                className="mt-3 flex max-w-md flex-col gap-3"
+            <Collapsible className="mt-1">
+              <CollapsibleTrigger
+                render={
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="px-0 text-muted-foreground"
+                  />
+                }
               >
-                <label className="flex flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-400">
-                  Description
-                  <textarea
-                    name="description"
-                    rows={3}
-                    defaultValue={event.description ?? ""}
-                    className="rounded-lg border border-black/[.08] bg-white px-3 py-2 text-black dark:border-white/[.145] dark:bg-zinc-950 dark:text-zinc-50"
-                  />
-                </label>
-                <label className="flex flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-400">
-                  Location
-                  <input
-                    name="location"
-                    defaultValue={event.location ?? ""}
-                    className="rounded-lg border border-black/[.08] bg-white px-3 py-2 text-black dark:border-white/[.145] dark:bg-zinc-950 dark:text-zinc-50"
-                  />
-                </label>
-                <button className="self-start rounded-full bg-black px-4 py-1.5 text-sm text-white transition-colors hover:bg-[#383838] dark:bg-zinc-50 dark:text-black dark:hover:bg-[#ccc]">
-                  Save
-                </button>
-              </form>
-            </details>
+                Edit details
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <form
+                  action={updateEventDetails.bind(null, event.id)}
+                  className="mt-3 flex max-w-md flex-col gap-3"
+                >
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      name="description"
+                      rows={3}
+                      defaultValue={event.description ?? ""}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      name="location"
+                      defaultValue={event.location ?? ""}
+                    />
+                  </div>
+                  <Button type="submit" size="sm" className="self-start">
+                    Save
+                  </Button>
+                </form>
+              </CollapsibleContent>
+            </Collapsible>
           )}
         </div>
 
         {user.is_admin && pendingRequests.length > 0 && (
-          <section className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/40">
-            <h2 className="font-medium text-amber-900 dark:text-amber-200">
+          <Card className="gap-3 bg-warning/40 p-4 ring-warning-foreground/20">
+            <h2 className="font-medium text-warning-foreground">
               Pending access requests
             </h2>
             <ul className="flex flex-col gap-2">
               {pendingRequests.map((req) => (
                 <li key={req.id} className="flex items-center gap-3 text-sm">
-                  <span className="flex-1 text-zinc-800 dark:text-zinc-200">
+                  <span className="flex-1">
                     {req.user.name ?? req.user.email}
                   </span>
-                  <form action={decideMembership.bind(null, req.id, "approved")}>
-                    <button className="rounded-full bg-black px-3 py-1 text-xs text-white hover:bg-[#383838] dark:bg-zinc-50 dark:text-black dark:hover:bg-[#ccc]">
+                  <form
+                    action={decideMembership.bind(null, req.id, "approved")}
+                  >
+                    <Button type="submit" size="xs">
                       Approve
-                    </button>
+                    </Button>
                   </form>
-                  <form action={decideMembership.bind(null, req.id, "rejected")}>
-                    <button className="rounded-full border border-black/[.08] px-3 py-1 text-xs hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]">
+                  <form
+                    action={decideMembership.bind(null, req.id, "rejected")}
+                  >
+                    <Button type="submit" size="xs" variant="outline">
                       Reject
-                    </button>
+                    </Button>
                   </form>
                 </li>
               ))}
             </ul>
-          </section>
+          </Card>
         )}
 
         <div className="flex flex-col gap-8 lg:flex-row">
           <section className="flex-1">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-medium text-black dark:text-zinc-50">
+              <h2 className="font-medium">
                 {votingOpen
                   ? "Click the days you're available"
                   : "Availability (voting closed)"}
@@ -243,102 +283,130 @@ export default async function EventPage({
                     pendingCount={pendingRequests.length}
                   />
                   {votingOpen && (
-                    <form action={closeVoting.bind(null, event.id)}>
-                      <button className="rounded-full border border-black/[.08] px-3 py-1 text-xs hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]">
-                        Close voting
-                      </button>
-                    </form>
+                    // Closing interrupts live voting, so it confirms first
+                    // (specs/spec.md §5.2, specs/shadcn-refactor.md §5.3).
+                    <ConfirmActionButton
+                      action={closeVoting.bind(null, event.id)}
+                      title="Close voting?"
+                      description={`Close voting for "${event.title}"? Participants can no longer change their availability. You can reopen voting later.`}
+                      confirmLabel="Close voting"
+                      confirmVariant="default"
+                      pendingLabel="Closing…"
+                    >
+                      Close voting
+                    </ConfirmActionButton>
                   )}
                   {event.status === "closed" && (
                     <form action={reopenVoting.bind(null, event.id)}>
-                      <button className="rounded-full border border-black/[.08] px-3 py-1 text-xs hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]">
+                      <Button type="submit" size="xs" variant="outline">
                         Reopen voting
-                      </button>
+                      </Button>
                     </form>
                   )}
-                  <DeleteEventButton
-                    eventId={event.id}
-                    eventTitle={event.title}
-                  />
+                  <ConfirmActionButton
+                    action={deleteEvent.bind(null, event.id)}
+                    title="Delete event?"
+                    description={`Delete "${event.title}"? This removes all access requests and votes too. This cannot be undone.`}
+                    confirmLabel="Delete event"
+                    variant="destructive"
+                    pendingLabel="Deleting…"
+                  >
+                    Delete event
+                  </ConfirmActionButton>
                 </div>
               )}
             </div>
-            <Calendar eventId={event.id} months={months} canVote={votingOpen} />
-            <div className="mt-3 flex flex-wrap gap-4 text-xs text-zinc-500">
+            <VotingCalendar
+              eventId={event.id}
+              months={months}
+              canVote={votingOpen}
+            />
+            <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
-                <span className="inline-block h-3 w-3 rounded bg-rose-100 dark:bg-rose-950" />
+                <span className="inline-block h-3 w-3 rounded bg-holiday" />
                 Holiday
               </span>
               <span className="flex items-center gap-1">
-                <span className="inline-block h-3 w-3 rounded bg-sky-100 dark:bg-sky-950" />
+                <span className="inline-block h-3 w-3 rounded bg-weekend" />
                 Weekend
               </span>
               <span className="flex items-center gap-1">
-                <span className="inline-block h-3 w-3 rounded border-2 border-green-500" />
+                <span className="inline-block h-3 w-3 rounded border-2 border-available" />
                 You&apos;re available
               </span>
             </div>
           </section>
 
           <aside className="flex w-full flex-col gap-3 lg:w-72">
-            <h2 className="font-medium text-black dark:text-zinc-50">
-              Most voted days
-            </h2>
+            <h2 className="font-medium">Most voted days</h2>
             {ranking.length === 0 ? (
-              <p className="text-sm text-zinc-500">No votes yet.</p>
+              <p className="text-sm text-muted-foreground">No votes yet.</p>
             ) : (
               <ol className="flex flex-col gap-2">
                 {ranking.map(([day, count]) => (
-                  <li
-                    key={day}
-                    className="flex items-center gap-2 rounded-lg border border-black/[.08] bg-white px-3 py-2 text-sm dark:border-white/[.145] dark:bg-zinc-950"
-                  >
-                    <div className="flex flex-1 flex-col">
-                      <span className="text-black dark:text-zinc-50">
-                        {formatDay(day)}
-                        {holidays.has(day) && (
-                          <span className="ml-1 text-xs text-rose-600 dark:text-rose-400">
-                            ({holidays.get(day)})
-                          </span>
-                        )}
-                      </span>
-                      <span className="text-xs text-zinc-500">
-                        {canRemove
-                          ? voters.get(day)?.map((voter, i) => (
-                              <span
-                                key={voter.userId}
-                                className="inline-flex items-center"
-                              >
-                                {i > 0 && ", "}
-                                {voter.name}
-                                <RemoveVoteButton
-                                  eventId={event.id}
-                                  userId={voter.userId}
-                                  userName={voter.name}
-                                  day={day}
-                                  dayLabel={formatDay(day)}
-                                />
-                              </span>
-                            ))
-                          : voters
-                              .get(day)
-                              ?.map((voter) => voter.name)
-                              .join(", ")}
-                      </span>
-                    </div>
-                    <span className="font-semibold text-black dark:text-zinc-50">
-                      {count}
-                    </span>
-                    {user.is_admin && event.status !== "finalized" && (
-                      <form action={finalizeEvent.bind(null, event.id, day)}>
-                        <button
-                          className="rounded-full border border-black/[.08] px-2 py-0.5 text-xs hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
-                          title="Finalize this date"
+                  <li key={day}>
+                    <Card className="flex-row items-center gap-2 p-3 text-sm">
+                      <div className="flex flex-1 flex-col">
+                        <span>
+                          {formatDay(day)}
+                          {holidays.has(day) && (
+                            <span className="ml-1 text-xs text-holiday-foreground">
+                              ({holidays.get(day)})
+                            </span>
+                          )}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {canRemove
+                            ? // One voter per line so the remove buttons
+                              // stay aligned and scannable.
+                              voters.get(day)?.map((voter) => (
+                                <span
+                                  key={voter.userId}
+                                  className="flex items-center"
+                                >
+                                  {voter.name}
+                                  <ConfirmActionButton
+                                    action={removeSingleVote.bind(
+                                      null,
+                                      event.id,
+                                      voter.userId,
+                                      day,
+                                    )}
+                                    title="Remove vote?"
+                                    description={`Remove ${voter.name}'s vote on ${formatDay(day)}? This cannot be undone.`}
+                                    confirmLabel="Remove vote"
+                                    variant="ghost"
+                                    size="icon-xs"
+                                    className="text-muted-foreground hover:text-destructive"
+                                    tooltip={`Remove ${voter.name}'s vote on ${formatDay(day)}`}
+                                    aria-label={`Remove ${voter.name}'s vote on ${formatDay(day)}`}
+                                  >
+                                    ×
+                                  </ConfirmActionButton>
+                                </span>
+                              ))
+                            : voters
+                                .get(day)
+                                ?.map((voter) => voter.name)
+                                .join(", ")}
+                        </span>
+                      </div>
+                      <span className="font-semibold">{count}</span>
+                      {user.is_admin && event.status !== "finalized" && (
+                        // Finalizing is one-way (specs/spec.md §5.2), so it
+                        // confirms first (specs/shadcn-refactor.md §5.3).
+                        <ConfirmActionButton
+                          action={finalizeEvent.bind(null, event.id, day)}
+                          title="Finalize this date?"
+                          description={`Finalize ${formatDay(day)} for "${event.title}"? Voting ends and the event cannot be reopened. This cannot be undone.`}
+                          confirmLabel="Finalize"
+                          confirmVariant="default"
+                          tooltip="Finalize this date"
                         >
                           Pick
-                        </button>
-                      </form>
-                    )}
+                        </ConfirmActionButton>
+                      )}
+                    </Card>
                   </li>
                 ))}
               </ol>
@@ -347,13 +415,11 @@ export default async function EventPage({
         </div>
 
         {user.is_admin && (
-          <section className="flex flex-col gap-3 rounded-xl border border-black/[.08] bg-white p-4 dark:border-white/[.145] dark:bg-zinc-950">
+          <Card className="gap-3 p-4">
             <div className="flex items-baseline gap-2">
-              <h2 className="font-medium text-black dark:text-zinc-50">
-                Participants
-              </h2>
+              <h2 className="font-medium">Participants</h2>
               {!canRemove && (
-                <span className="text-xs text-zinc-500">
+                <span className="text-xs text-muted-foreground">
                   finalized — read only
                 </span>
               )}
@@ -367,31 +433,44 @@ export default async function EventPage({
                     key={p.userId}
                     className="flex flex-wrap items-center gap-3 text-sm"
                   >
-                    <span className="text-zinc-800 dark:text-zinc-200">
+                    <span>
                       {displayName}
                       {p.isCreator && (
-                        <span className="ml-1 text-xs text-zinc-500">
+                        <span className="ml-1 text-xs text-muted-foreground">
                           (creator)
                         </span>
                       )}
                     </span>
-                    <span className="flex-1 text-xs text-zinc-500">
+                    <span className="flex-1 text-xs text-muted-foreground">
                       {voteCount} {voteCount === 1 ? "vote" : "votes"}
                     </span>
                     {canRemove && (
                       <>
-                        <ClearVotesButton
-                          eventId={event.id}
-                          userId={p.userId}
-                          userName={displayName}
-                          voteCount={voteCount}
-                        />
+                        <ConfirmActionButton
+                          action={clearUserVotes.bind(null, event.id, p.userId)}
+                          title="Clear votes?"
+                          description={`Clear all ${voteCount} of ${displayName}'s votes for this event? They stay in the event and can vote again. This cannot be undone.`}
+                          confirmLabel="Clear votes"
+                          disabled={voteCount === 0}
+                          pendingLabel="Clearing…"
+                        >
+                          Clear votes
+                        </ConfirmActionButton>
                         {!p.isCreator && p.membershipId && (
-                          <RemoveParticipantButton
-                            eventId={event.id}
-                            membershipId={p.membershipId}
-                            userName={displayName}
-                          />
+                          <ConfirmActionButton
+                            action={removeParticipant.bind(
+                              null,
+                              event.id,
+                              p.membershipId,
+                            )}
+                            title="Remove participant?"
+                            description={`Remove ${displayName} from this event? All of their votes are deleted too. They can request to enter again later. This cannot be undone.`}
+                            confirmLabel="Remove"
+                            variant="destructive"
+                            pendingLabel="Removing…"
+                          >
+                            Remove
+                          </ConfirmActionButton>
                         )}
                       </>
                     )}
@@ -399,7 +478,7 @@ export default async function EventPage({
                 );
               })}
             </ul>
-          </section>
+          </Card>
         )}
       </main>
     </div>

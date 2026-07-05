@@ -38,7 +38,7 @@ export async function createEvent(formData: FormData) {
   if (windowEnd < windowStart) {
     throw new Error("Window end must not be before window start");
   }
-  // 6-month cap (spec.md §8); the DB constraint is the backstop.
+  // 6-month cap (specs/spec.md §8); the DB constraint is the backstop.
   const cap = new Date(`${windowStart}T00:00:00Z`);
   cap.setUTCMonth(cap.getUTCMonth() + 6);
   if (new Date(`${windowEnd}T00:00:00Z`) > cap) {
@@ -110,7 +110,7 @@ export async function closeVoting(eventId: string) {
 export async function reopenVoting(eventId: string) {
   await requireAdmin();
   const supabase = createServerSupabaseClient();
-  // Only closed events can be reopened; finalized stays final (spec.md §8).
+  // Only closed events can be reopened; finalized stays final (specs/spec.md §8).
   const { error } = await supabase
     .from("events")
     .update({ status: "open", updated_at: new Date().toISOString() })
@@ -158,7 +158,7 @@ export async function requestAccess(eventId: string) {
   if (!existing) {
     // With auto-approve on, a first-time request is approved on the spot.
     // decided_by stays null — that's how auto-approvals are recorded
-    // (spec.md §4). A rejected user's re-request below is NOT auto-approved:
+    // (specs/spec.md §4). A rejected user's re-request below is NOT auto-approved:
     // a rejection is an explicit admin decision.
     const now = new Date().toISOString();
     const { error } = await supabase.from("event_memberships").insert(
@@ -174,7 +174,7 @@ export async function requestAccess(eventId: string) {
     );
     if (error) throw new Error(`Failed to request access: ${error.message}`);
   } else if (existing.status === "rejected") {
-    // Re-requesting flips the row back to pending (spec.md §4).
+    // Re-requesting flips the row back to pending (specs/spec.md §4).
     const { error } = await supabase
       .from("event_memberships")
       .update({
@@ -225,7 +225,7 @@ export async function setAutoApprove(eventId: string, enabled: boolean) {
   if (error) throw new Error(`Failed to update auto-approve: ${error.message}`);
 
   // Turning the flag on also approves everything currently pending,
-  // recorded as auto-approvals (decided_by = null, spec.md §4).
+  // recorded as auto-approvals (decided_by = null, specs/spec.md §4).
   if (enabled) {
     const { error: approveError } = await supabase
       .from("event_memberships")
@@ -247,7 +247,7 @@ export async function setAutoApprove(eventId: string, enabled: boolean) {
   revalidatePath("/");
 }
 
-// --- participant & vote removal (spec.md §5.3) ------------------------------
+// --- participant & vote removal (specs/spec.md §5.3) ------------------------------
 
 // Removal is only allowed while the event is open or closed; a finalized
 // event's record is frozen.
@@ -279,7 +279,7 @@ export async function removeParticipant(eventId: string, membershipId: string) {
     throw new Error("The event's creator cannot be removed");
   }
 
-  // Membership deletion does not cascade to votes (spec.md §4) — two
+  // Membership deletion does not cascade to votes (specs/spec.md §4) — two
   // explicit deletes, votes first so a failure never strands orphan votes.
   const { error: vError } = await supabase
     .from("availabilities")

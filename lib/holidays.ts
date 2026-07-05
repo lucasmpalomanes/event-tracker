@@ -1,4 +1,4 @@
-// Brazilian national holidays, computed in-app (spec.md §5.2 / §8).
+// Brazilian national holidays, computed in-app (specs/spec.md §5.2 / §8).
 // Fixed-date holidays plus movable feasts derived from Easter.
 
 // Anonymous Gregorian algorithm (Computus).

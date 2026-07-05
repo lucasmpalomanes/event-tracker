@@ -5,7 +5,7 @@ candidate date window; participants mark the days they're available on a
 calendar (weekends and Brazilian national holidays highlighted), and a live
 ranking shows the most-voted days so the admin can finalize one.
 
-Full product spec: [`spec.md`](./spec.md).
+Full product spec: [`specs/spec.md`](./specs/spec.md). All specs live in [`specs/`](./specs/).
 
 ## Stack
 
@@ -60,13 +60,16 @@ update users set is_admin = true where email = 'you@example.com';
 
 | Path | Purpose |
 |---|---|
-| `spec.md` | Product spec — roles, data model, screens, decisions |
+| `specs/spec.md` | Product spec — roles, data model, screens, decisions |
+| `specs/shadcn-refactor.md` | UI refactor spec — migrate components to shadcn/ui |
 | `supabase/schema.sql` | Database schema (run in Supabase SQL editor) |
 | `proxy.ts` | Auth0 session handling (Next 16's renamed middleware) |
 | `lib/dal.ts` | Auth gate: Auth0 session → Supabase user sync |
 | `lib/events.ts` | Event/membership/availability queries + access rules |
 | `lib/holidays.ts` | Brazilian national holidays, computed in-app |
 | `app/actions.ts` | All mutations (Server Actions, each re-checks auth) |
+| `components/ui/` | shadcn/ui primitives (CLI-generated — don't hand-edit) |
+| `components/` | Shared app components (voting calendar, confirm-action button) |
 | `app/page.tsx` | Event list with per-user membership state |
 | `app/events/new/` | Event creation (admin) |
 | `app/events/[id]/` | Date page: calendar, voting, ranking, admin controls |
