@@ -30,7 +30,7 @@ export type EventListItem = EventRow & {
   pendingCount: number; // only populated for admins
 };
 
-// Whether this user may enter the event's date page (spec.md §3):
+// Whether this user may enter the event's date page (specs/spec.md §3):
 // approved membership, event creator, or any admin.
 export function canEnterEvent(
   user: AppUser,
@@ -45,7 +45,7 @@ export function canEnterEvent(
 }
 
 // All events with the viewer's membership state; pending request counts
-// are included for admins (spec.md §5.1).
+// are included for admins (specs/spec.md §5.1).
 export async function listEvents(user: AppUser): Promise<EventListItem[]> {
   const supabase = createServerSupabaseClient();
 
@@ -143,8 +143,8 @@ export type Participant = {
   isCreator: boolean;
 };
 
-// Approved members plus the event's creator (implicitly approved, spec.md §4),
-// for the admin participant list (spec.md §5.3).
+// Approved members plus the event's creator (implicitly approved, specs/spec.md §4),
+// for the admin participant list (specs/spec.md §5.3).
 export async function listParticipants(event: EventRow): Promise<Participant[]> {
   const supabase = createServerSupabaseClient();
   const [{ data: members, error }, { data: creator, error: cError }] =

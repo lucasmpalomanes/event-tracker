@@ -70,7 +70,7 @@ export function Calendar({
               const count = cell.count - (cell.mine ? 1 : 0) + (mine ? 1 : 0);
               const interactive = canVote && cell.inWindow;
 
-              // Precedence: holiday > weekend > weekday (spec.md §5.2).
+              // Precedence: holiday > weekend > weekday (specs/spec.md §5.2).
               const tone = cell.holiday
                 ? "bg-rose-100 text-rose-900 dark:bg-rose-950 dark:text-rose-200"
                 : cell.isWeekend

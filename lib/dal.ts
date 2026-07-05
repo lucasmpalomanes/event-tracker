@@ -12,7 +12,7 @@ export type AppUser = {
 };
 
 // Resolves the Auth0 session and mirrors the identity into the Supabase
-// `users` table (spec.md §6). Returns null when logged out. Cached per
+// `users` table (specs/spec.md §6). Returns null when logged out. Cached per
 // render pass so pages, layouts and actions can all call it freely.
 export const getCurrentUser = cache(async (): Promise<AppUser | null> => {
   const session = await auth0.getSession();

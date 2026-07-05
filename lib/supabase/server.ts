@@ -2,7 +2,7 @@ import "server-only";
 import { createClient } from "@supabase/supabase-js";
 
 // Server-only client using the secret key. Never import this from a
-// Client Component — see spec.md §6 (no RLS; every access path is a
+// Client Component — see specs/spec.md §6 (no RLS; every access path is a
 // server action / route handler that checks auth itself).
 export function createServerSupabaseClient() {
   const url = process.env.SUPABASE_URL;

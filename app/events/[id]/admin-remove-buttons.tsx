@@ -7,7 +7,7 @@ import {
   removeSingleVote,
 } from "@/app/actions";
 
-// Admin-only removal actions (spec.md §5.3). Each asks for confirmation:
+// Admin-only removal actions (specs/spec.md §5.3). Each asks for confirmation:
 // the deletes are hard and have no undo.
 
 export function RemoveParticipantButton({

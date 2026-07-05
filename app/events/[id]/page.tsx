@@ -32,7 +32,7 @@ function formatDay(day: string) {
 }
 
 // Build one grid per calendar month covered by the window. Days outside
-// the window are rendered but non-interactive (spec.md §5.2).
+// the window are rendered but non-interactive (specs/spec.md §5.2).
 function buildMonths(
   windowStart: string,
   windowEnd: string,
@@ -133,7 +133,7 @@ export default async function EventPage({
     .slice(0, 10);
 
   const votingOpen = event.status === "open";
-  // Removal is allowed on open/closed events only (spec.md §5.3).
+  // Removal is allowed on open/closed events only (specs/spec.md §5.3).
   const canRemove = user.is_admin && event.status !== "finalized";
 
   return (
