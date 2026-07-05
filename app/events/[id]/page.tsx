@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ArrowLeftIcon } from "lucide-react";
 import { getCurrentUser } from "@/lib/dal";
 import {
   canEnterEvent,
@@ -51,12 +52,22 @@ function buildMonths(
   windowEnd: string,
   holidays: Map<string, string>,
   counts: Map<string, number>,
-  mine: Set<string>
+  mine: Set<string>,
 ): CalendarMonth[] {
   const months: CalendarMonth[] = [];
   const MONTH_NAMES = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   let year = Number(windowStart.slice(0, 4));
@@ -71,7 +82,7 @@ function buildMonths(
     const cells = [];
     for (let dom = 1; dom <= daysInMonth; dom++) {
       const day = `${year}-${String(month).padStart(2, "0")}-${String(
-        dom
+        dom,
       ).padStart(2, "0")}`;
       const weekday = new Date(`${day}T00:00:00Z`).getUTCDay();
       cells.push({
@@ -138,7 +149,7 @@ export default async function EventPage({
     event.window_end,
     holidays,
     counts,
-    mine
+    mine,
   );
 
   const ranking = [...counts.entries()]
@@ -153,12 +164,15 @@ export default async function EventPage({
     <div className="flex flex-col flex-1">
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-8 py-12">
         <div className="flex flex-col gap-2">
-          <Link
-            href="/"
-            className="text-sm text-muted-foreground hover:underline"
+          <Button
+            variant="ghost"
+            size="sm"
+            className="self-start text-muted-foreground"
+            render={<Link href="/" />}
           >
-            ← Back to events
-          </Link>
+            <ArrowLeftIcon data-icon="inline-start" />
+            Back to events
+          </Button>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-semibold tracking-tight">
               {event.title}
@@ -175,9 +189,7 @@ export default async function EventPage({
             <p className="text-muted-foreground">{event.description}</p>
           )}
           {event.location && (
-            <p className="text-sm text-muted-foreground">
-              📍 {event.location}
-            </p>
+            <p className="text-sm text-muted-foreground">📍 {event.location}</p>
           )}
           {user.is_admin && (
             <Collapsible className="mt-1">
@@ -234,12 +246,16 @@ export default async function EventPage({
                   <span className="flex-1">
                     {req.user.name ?? req.user.email}
                   </span>
-                  <form action={decideMembership.bind(null, req.id, "approved")}>
+                  <form
+                    action={decideMembership.bind(null, req.id, "approved")}
+                  >
                     <Button type="submit" size="xs">
                       Approve
                     </Button>
                   </form>
-                  <form action={decideMembership.bind(null, req.id, "rejected")}>
+                  <form
+                    action={decideMembership.bind(null, req.id, "rejected")}
+                  >
                     <Button type="submit" size="xs" variant="outline">
                       Reject
                     </Button>
@@ -340,19 +356,20 @@ export default async function EventPage({
                         </span>
                         <span className="text-xs text-muted-foreground">
                           {canRemove
-                            ? voters.get(day)?.map((voter, i) => (
+                            ? // One voter per line so the remove buttons
+                              // stay aligned and scannable.
+                              voters.get(day)?.map((voter) => (
                                 <span
                                   key={voter.userId}
-                                  className="inline-flex items-center"
+                                  className="flex items-center"
                                 >
-                                  {i > 0 && ", "}
                                   {voter.name}
                                   <ConfirmActionButton
                                     action={removeSingleVote.bind(
                                       null,
                                       event.id,
                                       voter.userId,
-                                      day
+                                      day,
                                     )}
                                     title="Remove vote?"
                                     description={`Remove ${voter.name}'s vote on ${formatDay(day)}? This cannot be undone.`}
@@ -429,11 +446,7 @@ export default async function EventPage({
                     {canRemove && (
                       <>
                         <ConfirmActionButton
-                          action={clearUserVotes.bind(
-                            null,
-                            event.id,
-                            p.userId
-                          )}
+                          action={clearUserVotes.bind(null, event.id, p.userId)}
                           title="Clear votes?"
                           description={`Clear all ${voteCount} of ${displayName}'s votes for this event? They stay in the event and can vote again. This cannot be undone.`}
                           confirmLabel="Clear votes"
@@ -447,7 +460,7 @@ export default async function EventPage({
                             action={removeParticipant.bind(
                               null,
                               event.id,
-                              p.membershipId
+                              p.membershipId,
                             )}
                             title="Remove participant?"
                             description={`Remove ${displayName} from this event? All of their votes are deleted too. They can request to enter again later. This cannot be undone.`}
