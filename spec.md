@@ -35,7 +35,7 @@ is intentionally **out of scope** for this version — see [§9 Future work](#9-
 
 | Role | Can do |
 |------|--------|
-| **Admin** | Create, edit, and delete events. **Approve/reject who may enter an event**, or enable **auto-approval** per event. Open/close voting. Finalize the chosen date. Everything a participant can do. |
+| **Admin** | Create, edit, and delete events. **Approve/reject who may enter an event**, or enable **auto-approval** per event. **Remove a participant from an event (their votes go with them) or remove individual votes** (see [§5.3](#53-participant--vote-removal-admin)). Open/close voting. Finalize the chosen date. Everything a participant can do. |
 | **Participant** (any logged-in user) | Browse the full event list, request to enter an event, and — once approved — mark/update their own availability and view the ranking. |
 | **Anonymous visitor** | See the main page (event list is gated or teased) and the login entry point only. |
 
@@ -98,6 +98,12 @@ A `rejected` user may **request again**: re-requesting flips their existing row
 back to `pending` (with a fresh `requested_at`), rather than inserting a new
 row — so the (`event_id`, `user_id`) uniqueness holds.
 
+**Removal is deletion.** When an admin removes a participant
+([§5.3](#53-participant--vote-removal-admin)), the membership row is **deleted**
+(not flipped to `rejected`), and the user's `availabilities` for that event are
+deleted in the same operation. A removed user sees the event as "no membership"
+and may request to enter again like anyone else — removal is not a ban.
+
 #### Auto-approving new members
 
 Each event has an `auto_approve_members` flag (per-event granularity; there is
@@ -113,7 +119,9 @@ no global setting). Default is **false** — manual approval, today's behavior.
 - **Exception — previously rejected users:** a re-request from a user whose
   membership is `rejected` goes to `pending` for manual review, even with the
   flag on. A rejection is an explicit admin decision and auto-approve does not
-  override it.
+  override it. (A **removed** participant is different: removal deletes the
+  row, so their re-request counts as first-time and **is** auto-approved —
+  consistent with "removal is not a ban" above.)
 - The flag applies to any non-deleted event **regardless of `status`**
   (`open`, `closed`, or `finalized`): entering only grants access to view the
   page/ranking, and voting rights are already governed by event status.
@@ -139,6 +147,13 @@ One row per (user, event, day) that a user marks as available.
 
 The ranking is derived: `COUNT(*) GROUP BY day` over an event's availabilities,
 ordered descending.
+
+Rows are deleted by their owner (un-toggling a day), by an admin
+([§5.3](#53-participant--vote-removal-admin)), or by FK cascade when the user
+or event is deleted. Note that deleting an `event_memberships` row does **not**
+cascade here — participant removal deletes membership and votes as two explicit
+deletes in one server operation. No soft-delete or tombstones — a removed vote
+simply disappears from the ranking.
 
 > **Holidays are not stored per-event.** Brazilian holidays are computed/looked
 > up at render time (see [§5.2](#52-date-page)), not persisted, so the holiday
@@ -195,10 +210,46 @@ this page; anyone else is redirected back to the list with their request status.
   event creation form, default off). Turning it on warns that all currently
   pending requests will be approved, then approves them (see
   [auto-approval](#auto-approving-new-members)).
+- **Manage participants and votes** — remove a participant (and their votes) or
+  remove individual votes; see [§5.3](#53-participant--vote-removal-admin).
 - Close voting (reversible — a `closed` event can be reopened), and finalize a
   specific date (typically the top-ranked one).
 - Note: **finalizing is one-way** in v1 — a `finalized` event cannot be
   re-opened.
+
+### 5.3 Participant & vote removal (admin)
+
+Admins can clean up an event's participation: kick a user who shouldn't be
+there, or delete stray/mistaken votes without kicking anyone.
+
+**Actions**
+
+1. **Remove participant.** From a participant list on the date page (approved
+   members, each with their vote count), the admin removes a user. In one
+   operation this deletes the user's `event_memberships` row **and all of their
+   `availabilities` for that event**. The ranking updates immediately.
+2. **Clear a user's votes.** Same list, lighter action: delete all of the
+   user's `availabilities` for the event but **keep their approved
+   membership** — they stay in and can vote again.
+3. **Remove a single vote.** The ranking panel's per-day voter list gains an
+   admin-only remove action next to each name: deletes that one
+   (`event_id`, `user_id`, `day`) row.
+
+**Rules**
+
+- Admin-only; enforced in the server layer like all other writes ([§6](#6-authentication--identity)).
+- Allowed while the event is **`open` or `closed`**; **not** on `finalized`
+  events — a finalized event's record is frozen, consistent with one-way
+  finalization ([§5.2](#52-date-page)).
+- The event's **creator cannot be removed** (their membership is implicit,
+  [§4](#event_memberships)). Admins can still clear/remove the creator's votes,
+  including their own.
+- Each action asks for a **confirmation** (it's destructive and has no undo);
+  "Remove participant" spells out that the user's votes go too.
+- **No notification** to the affected user (consistent with v1's no-notification
+  stance, [§8](#8-resolved-decisions)); they simply see the event as
+  "no membership" again and may re-request entry.
+- Removal is **hard deletion** — no audit trail in v1 (see [§9](#9-future-work)).
 
 ## 6. Authentication & identity
 
@@ -248,6 +299,13 @@ this page; anyone else is redirected back to the list with their request status.
   on; the flag applies to any non-deleted event **regardless of status**
   (open/closed/finalized). Auto-approvals are recorded with
   `decided_by = null`. See [auto-approval](#auto-approving-new-members).
+- **Participant/vote removal (added 2026-07-04):** admins can remove a
+  participant from an event or remove votes ([§5.3](#53-participant--vote-removal-admin)).
+  Removing a participant **deletes** their membership row and their votes (not a
+  ban — they may re-request entry); vote removal comes in per-user ("clear all")
+  and per-vote (single user+day) granularity. Allowed on `open` and `closed`
+  events only; `finalized` events are frozen. Hard deletes, no notification to
+  the affected user.
 - **Notifying an approved user:** no in-app notifications in v1. For the current
   scope (a closed friends group) the admin messages people out-of-band; a user
   otherwise learns of approval by revisiting the list. In-app notifications are
@@ -264,3 +322,8 @@ this page; anyone else is redirected back to the list with their request status.
   closed friends group, the admin just messages people directly.)
 - Self-service event creation for non-admins (or an "organizer" role).
 - Time-of-day availability granularity.
+- **Audit log for admin removals:** record who removed which participant/vote
+  and when ([§5.3](#53-participant--vote-removal-admin) is hard-delete-only in
+  v1). Would also unblock notifying affected users.
+- **Ban semantics:** a "removed, may not re-request" membership status, if
+  repeat offenders ever become a problem for the closed group.
