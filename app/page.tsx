@@ -99,7 +99,7 @@ export default async function Home() {
             Pick the best date for your next get-together. Log in to see the
             events and vote on the days you&apos;re available.
           </p>
-          <Button size="lg" render={<a href="/auth/login" />}>
+          <Button size="lg" nativeButton={false} render={<a href="/auth/login" />}>
             Log in
           </Button>
         </main>
@@ -121,6 +121,7 @@ export default async function Home() {
           <Button
             variant="outline"
             size="sm"
+            nativeButton={false}
             render={<a href="/auth/logout" />}
           >
             Log out
@@ -131,7 +132,11 @@ export default async function Home() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">Events</h1>
           {user.is_admin && (
-            <Button size="sm" render={<Link href="/events/new" />}>
+            <Button
+              size="sm"
+              nativeButton={false}
+              render={<Link href="/events/new" />}
+            >
               Create event
             </Button>
           )}

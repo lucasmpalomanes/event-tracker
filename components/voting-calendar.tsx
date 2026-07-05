@@ -97,12 +97,12 @@ export function VotingCalendar({
                       ? "border-border"
                       : "border-transparent opacity-30",
                     mine && "border-2 border-available",
-                    interactive && "cursor-pointer hover:opacity-75"
+                    interactive && "cursor-pointer hover:opacity-75",
                   )}
                 >
                   <span>{cell.dom}</span>
                   {cell.inWindow && count > 0 && (
-                    <span className="text-[10px] leading-none text-muted-foreground">
+                    <span className="text-[8px] leading-none text-muted-foreground">
                       {count} {count === 1 ? "vote" : "votes"}
                     </span>
                   )}

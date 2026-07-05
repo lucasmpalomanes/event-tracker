@@ -168,6 +168,7 @@ export default async function EventPage({
             variant="ghost"
             size="sm"
             className="self-start text-muted-foreground"
+            nativeButton={false}
             render={<Link href="/" />}
           >
             <ArrowLeftIcon data-icon="inline-start" />
