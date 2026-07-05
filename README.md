@@ -68,6 +68,8 @@ update users set is_admin = true where email = 'you@example.com';
 | `lib/events.ts` | Event/membership/availability queries + access rules |
 | `lib/holidays.ts` | Brazilian national holidays, computed in-app |
 | `app/actions.ts` | All mutations (Server Actions, each re-checks auth) |
+| `components/ui/` | shadcn/ui primitives (CLI-generated — don't hand-edit) |
+| `components/` | Shared app components (voting calendar, confirm-action button) |
 | `app/page.tsx` | Event list with per-user membership state |
 | `app/events/new/` | Event creation (admin) |
 | `app/events/[id]/` | Date page: calendar, voting, ranking, admin controls |
