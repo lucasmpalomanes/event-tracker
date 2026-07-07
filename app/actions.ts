@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/dal";
 import { canEnterEvent, getEvent, getMembership } from "@/lib/events";
+import { notifyAdminsOfJoinRequest } from "@/lib/notify";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -155,6 +156,7 @@ export async function requestAccess(eventId: string) {
   const existing = await getMembership(eventId, user.id);
 
   const supabase = createServerSupabaseClient();
+  let requested = false;
   if (!existing) {
     // With auto-approve on, a first-time request is approved on the spot.
     // decided_by stays null — that's how auto-approvals are recorded
@@ -173,6 +175,7 @@ export async function requestAccess(eventId: string) {
         : { event_id: eventId, user_id: user.id }
     );
     if (error) throw new Error(`Failed to request access: ${error.message}`);
+    requested = true;
   } else if (existing.status === "rejected") {
     // Re-requesting flips the row back to pending (specs/spec.md §4).
     const { error } = await supabase
@@ -185,7 +188,9 @@ export async function requestAccess(eventId: string) {
       })
       .eq("id", existing.id);
     if (error) throw new Error(`Failed to re-request access: ${error.message}`);
+    requested = true;
   }
+  if (requested) await notifyAdminsOfJoinRequest(user, event);
   revalidatePath("/");
 }
 

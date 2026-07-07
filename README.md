@@ -34,7 +34,19 @@ Full product spec: [`specs/spec.md`](./specs/spec.md). All specs live in [`specs
    - Allowed Web Origins: `http://localhost:3000`
 3. Copy the Domain, Client ID, and Client Secret.
 
-### 3. Environment
+### 3. Resend (optional — email notifications)
+
+Admins get an email when someone requests to join an event. To enable it:
+
+1. Create an account at [resend.com](https://resend.com) and copy an API key
+   into `RESEND_API_KEY`.
+2. Verify a sending domain and set `EMAIL_FROM` accordingly. Without a
+   verified domain, the `onboarding@resend.dev` default only delivers to the
+   Resend account owner's own address.
+
+Leave `RESEND_API_KEY` empty to skip notifications entirely.
+
+### 4. Environment
 
 ```bash
 cp .env.example .env.local
@@ -42,7 +54,7 @@ cp .env.example .env.local
 openssl rand -hex 32
 ```
 
-### 4. Run
+### 5. Run
 
 ```bash
 npm install
