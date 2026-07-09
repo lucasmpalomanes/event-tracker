@@ -99,7 +99,11 @@ export default async function Home() {
             Pick the best date for your next get-together. Log in to see the
             events and vote on the days you&apos;re available.
           </p>
-          <Button size="lg" nativeButton={false} render={<a href="/auth/login" />}>
+          <Button
+            size="lg"
+            nativeButton={false}
+            render={<a href="/auth/login" />}
+          >
             Log in
           </Button>
         </main>
@@ -113,7 +117,7 @@ export default async function Home() {
     <div className="flex flex-col flex-1">
       <header className="flex w-full items-center justify-between border-b px-8 py-4">
         <span className="font-semibold">Gagasco</span>
-        <div className="flex items-center gap-4 text-sm">
+        <div className="flex items-center gap-4 text-sm pl-5">
           <span className="text-muted-foreground">
             {user.name ?? user.email}
             {user.is_admin && " (admin)"}

@@ -164,8 +164,8 @@ export function DatesTab({
 
       <div className="flex flex-col gap-8 lg:flex-row">
         <section className="flex-1">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-medium">
+          <div className="mb-3 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="font-medium min-w-40">
               {votingOpen
                 ? "Click the days you're available"
                 : "Availability (voting closed)"}
@@ -319,7 +319,7 @@ export function DatesTab({
               return (
                 <li
                   key={p.userId}
-                  className="flex flex-wrap items-center gap-3 text-sm"
+                  className="flex items-center gap-3 text-sm"
                 >
                   <span>
                     {displayName}
@@ -333,7 +333,7 @@ export function DatesTab({
                     {voteCount} {voteCount === 1 ? "vote" : "votes"}
                   </span>
                   {canRemove && (
-                    <>
+                    <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
                       <ConfirmActionButton
                         action={clearUserVotes.bind(null, event.id, p.userId)}
                         title="Clear votes?"
@@ -360,7 +360,7 @@ export function DatesTab({
                           Remove
                         </ConfirmActionButton>
                       )}
-                    </>
+                    </div>
                   )}
                 </li>
               );
