@@ -140,9 +140,9 @@ regeneration.
 
 ## 5. PSP integration
 
-The app talks to a Pix PSP (payment service provider) — **which one is an open
-question**, [§8](#8-open-questions) — through a thin adapter in
-`lib/pix.ts` exposing exactly three operations:
+The PSP is **Mercado Pago** (decision rationale in [§9](#9-resolved-decisions)).
+The app talks to it through a thin adapter in `lib/pix.ts` exposing exactly
+three operations:
 
 1. `createCharge({ txid, amountCents, expiresInSeconds })` →
    `{ brcode, pspChargeId, expiresAt }` — creates an immediate dynamic charge
@@ -152,16 +152,31 @@ question**, [§8](#8-open-questions) — through a thin adapter in
 3. `verifyWebhook(request)` → `{ txid, paidAt } | reject` — authenticates an
    incoming webhook call and extracts the paid charge.
 
-Keeping every PSP-specific detail (auth, certificate handling, payload shapes)
-behind this adapter means switching PSPs is a one-file change.
+Keeping every PSP-specific detail (auth, payload shapes) behind this adapter
+means switching PSPs is a one-file change.
+
+**Mercado Pago mapping** (inside the adapter):
+- A charge is a **Payments API** payment with `payment_method_id: "pix"`.
+  Mercado Pago is not the BCB-standard Pix API, so our `txid` travels in
+  **`external_reference`**; MP's own payment id is stored as `psp_charge_id`
+  (and is what webhook payloads carry — the adapter resolves it back to the
+  charge, falling back to `external_reference`).
+- The copia-e-cola payload comes back in
+  `point_of_interaction.transaction_data.qr_code` → our `brcode`.
+- Expiration via `date_of_expiration`.
+- Auth is a server-side **access token** — no client certificate. Sandbox:
+  MP test credentials point a dev deployment at a parallel test environment.
+- Funds settle in the Mercado Pago account; moving them to a bank account is
+  a manual (free) withdrawal, outside the app.
 
 **Charge parameters:** expiration **7 days** from creation. Fixed amount (the
 payer cannot alter it). No `devedor`.
 
 **Webhook endpoint:** a route handler at `/api/pix/webhook`.
-- Must authenticate the caller per the chosen PSP's mechanism (mTLS, HMAC
-  signature, or secret in the URL — see [§8](#8-open-questions); the app is on
-  Vercel, which constrains mTLS options).
+- Authenticates the caller by validating Mercado Pago's **`x-signature`
+  header** (HMAC over the notification's timestamp + id, using the webhook
+  secret from the MP dashboard, kept in an env var). Requests failing
+  validation get a 401 and are logged.
 - Looks up the charge by `txid`; unknown txids are acknowledged and ignored
   (200, so the PSP stops retrying) but logged.
 - Sets `status = paid`, `paid_at` from the payload. **Idempotent:** a webhook
@@ -224,9 +239,10 @@ admin.
 All payment UI lives on the event page (`/events/[id]`), which is already
 membership-gated — specifically in its **Budget tab**
 ([`event-budget.md`](./event-budget.md) §6, which reorganized the page into
-Dates/Budget tabs and relocated the UI described below there). Nothing changes
-on the main list except an optional "pagamento pendente" badge on finalized
-events the viewer hasn't paid ([§8](#8-open-questions)).
+Dates/Budget tabs and relocated the UI described below there). **Nothing
+changes on the main event list** — a "pagamento pendente" badge there was
+considered and rejected ([§9](#9-resolved-decisions)); payment status lives
+only in the Budget tab.
 
 ### 7.1 Participant view (finalized event, charging active)
 
@@ -258,18 +274,30 @@ A **payment card** at the top of the Budget tab:
 
 ## 8. Open questions
 
-1. **Which PSP?** Requirements: pessoa-física friendly, dynamic `cob` API,
-   webhooks that work from Vercel (no client-cert/mTLS requirement we can't
-   meet, or a supported skip-mTLS mode). Candidates: Efí (has skip-mTLS +
-   HMAC), Mercado Pago, Asaas. Decide before implementation; the `lib/pix.ts`
-   adapter (§5) isolates the choice.
-2. **Homologation/sandbox:** does the chosen PSP offer a sandbox we can point
-   a dev deployment at, and what does account approval require?
-3. Show a "pagamento pendente" badge on the main event list, or keep all
-   payment UI on the date page only?
+None at the moment — the PSP choice, sandbox strategy, and list-badge
+questions were all resolved on 2026-07-08 (see [§9](#9-resolved-decisions)).
 
 ## 9. Resolved decisions
 
+- **PSP = Mercado Pago** *(2026-07-08)*. Compared against Efí and Asaas for a
+  pessoa-física account receiving small per-person charges on Vercel:
+  - **Mercado Pago:** 0.99% per Pix (≈ R$ 0.50 on a R$ 50 charge), access
+    token only, `x-signature` HMAC webhook (serverless-friendly), test
+    credentials for sandbox. Chosen.
+  - **Efí:** true BCB Pix API and funds land in one's own account, but 1.19%,
+    requires an Efí Pro account + `.p12` client certificate, and its webhook
+    wants mTLS — the skip-mTLS + HMAC mode exists but Efí itself flags it as
+    homologation-grade.
+  - **Asaas:** integration as simple as MP (header token webhook, separate
+    sandbox), but a **flat R$ 1.99** per paid dynamic-QR charge (R$ 0.99 in
+    the first 3 months) — ≈ 4% at churrasco-sized values; only competitive
+    above ~R$ 200/person. The PF free tier covers static QR only.
+
+  The `lib/pix.ts` adapter (§5) keeps this swappable if fees or requirements
+  change.
+- **No "pagamento pendente" badge on the main event list** *(2026-07-08)* —
+  the list stays payment-free; status lives only in the Budget tab. Cheaper
+  listing query, and reminders are future work anyway.
 - **Dynamic charge per participant, reconciled by `txid`** — not one shared
   static code. The app generates the txid and maps it to a user, so we know
   who paid without collecting anyone's CPF. *(2026-07-08)*
