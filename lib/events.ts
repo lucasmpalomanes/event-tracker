@@ -141,17 +141,21 @@ export type Participant = {
   name: string | null;
   email: string;
   isCreator: boolean;
+  // Consumption flags (specs/pix-payments.md §4) — drive budget shares.
+  noAlcohol: boolean;
+  noMeat: boolean;
 };
 
 // Approved members plus the event's creator (implicitly approved, specs/spec.md §4),
-// for the admin participant list (specs/spec.md §5.3).
+// for the admin participant list (specs/spec.md §5.3) and the budget
+// computation (specs/event-budget.md §5).
 export async function listParticipants(event: EventRow): Promise<Participant[]> {
   const supabase = createServerSupabaseClient();
   const [{ data: members, error }, { data: creator, error: cError }] =
     await Promise.all([
       supabase
         .from("event_memberships")
-        .select("id, user_id, users!user_id ( name, email )")
+        .select("id, user_id, no_alcohol, no_meat, users!user_id ( name, email )")
         .eq("event_id", event.id)
         .eq("status", "approved")
         .order("requested_at"),
@@ -177,16 +181,26 @@ export async function listParticipants(event: EventRow): Promise<Participant[]> 
         name: u?.name ?? null,
         email: u?.email ?? "",
         isCreator: false,
+        noAlcohol: row.no_alcohol as boolean,
+        noMeat: row.no_meat as boolean,
       };
     });
 
+  // The creator's flags live on their membership row too, when they have one
+  // (created by setConsumptionFlags on first toggle); default to false.
+  const creatorRow = (members ?? []).find(
+    (row) => (row.user_id as string) === event.created_by
+  );
+
   return [
     {
-      membershipId: null,
+      membershipId: (creatorRow?.id as string) ?? null,
       userId: creator.id as string,
       name: creator.name as string | null,
       email: creator.email as string,
       isCreator: true,
+      noAlcohol: (creatorRow?.no_alcohol as boolean) ?? false,
+      noMeat: (creatorRow?.no_meat as boolean) ?? false,
     },
     ...rows,
   ];
