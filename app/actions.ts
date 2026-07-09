@@ -249,20 +249,13 @@ export async function setAutoApprove(eventId: string, enabled: boolean) {
 
 // --- participant & vote removal (specs/spec.md §5.3) ------------------------------
 
-// Removal is only allowed while the event is open or closed; a finalized
-// event's record is frozen.
-async function requireRemovableEvent(eventId: string) {
-  const event = await getEvent(eventId);
-  if (!event) throw new Error("Event not found");
-  if (event.status === "finalized") {
-    throw new Error("A finalized event cannot be changed");
-  }
-  return event;
-}
+// Removal is allowed on any event status, including finalized (revised
+// 2026-07-08) — people can change their mind about attending.
 
 export async function removeParticipant(eventId: string, membershipId: string) {
   await requireAdmin();
-  const event = await requireRemovableEvent(eventId);
+  const event = await getEvent(eventId);
+  if (!event) throw new Error("Event not found");
 
   const supabase = createServerSupabaseClient();
   const { data: membership, error: mError } = await supabase
@@ -301,7 +294,6 @@ export async function removeParticipant(eventId: string, membershipId: string) {
 
 export async function clearUserVotes(eventId: string, userId: string) {
   await requireAdmin();
-  await requireRemovableEvent(eventId);
 
   const supabase = createServerSupabaseClient();
   const { error } = await supabase
@@ -321,7 +313,6 @@ export async function removeSingleVote(
 ) {
   await requireAdmin();
   if (!DAY_RE.test(day)) throw new Error("Invalid day");
-  await requireRemovableEvent(eventId);
 
   const supabase = createServerSupabaseClient();
   const { error } = await supabase
@@ -332,6 +323,127 @@ export async function removeSingleVote(
     .eq("day", day);
   if (error) throw new Error(`Failed to remove vote: ${error.message}`);
 
+  revalidatePath(`/events/${eventId}`);
+}
+
+// --- budget (specs/event-budget.md) -----------------------------------------
+
+const EXEMPTIONS = ["none", "alcohol", "meat"] as const;
+
+function parseBudgetItemInput(name: unknown, amountCents: unknown, exemption: unknown) {
+  const trimmed = String(name ?? "").trim();
+  if (!trimmed) throw new Error("Item name is required");
+  const cents = Number(amountCents);
+  if (!Number.isInteger(cents) || cents <= 0) {
+    throw new Error("Item amount must be a positive value");
+  }
+  if (!EXEMPTIONS.includes(exemption as (typeof EXEMPTIONS)[number])) {
+    throw new Error("Invalid exemption group");
+  }
+  return { name: trimmed, amount_cents: cents, exemption: exemption as string };
+}
+
+export async function addBudgetItem(
+  eventId: string,
+  name: string,
+  amountCents: number,
+  exemption: string
+) {
+  await requireAdmin();
+  const event = await getEvent(eventId);
+  if (!event) throw new Error("Event not found");
+
+  const supabase = createServerSupabaseClient();
+  const { error } = await supabase
+    .from("budget_items")
+    .insert({ event_id: eventId, ...parseBudgetItemInput(name, amountCents, exemption) });
+  if (error) throw new Error(`Failed to add budget item: ${error.message}`);
+  revalidatePath(`/events/${eventId}`);
+}
+
+export async function updateBudgetItem(
+  eventId: string,
+  itemId: string,
+  name: string,
+  amountCents: number,
+  exemption: string
+) {
+  await requireAdmin();
+  const supabase = createServerSupabaseClient();
+  const { error } = await supabase
+    .from("budget_items")
+    .update({
+      ...parseBudgetItemInput(name, amountCents, exemption),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", itemId)
+    .eq("event_id", eventId);
+  if (error) throw new Error(`Failed to update budget item: ${error.message}`);
+  revalidatePath(`/events/${eventId}`);
+}
+
+export async function deleteBudgetItem(eventId: string, itemId: string) {
+  await requireAdmin();
+  const supabase = createServerSupabaseClient();
+  const { error } = await supabase
+    .from("budget_items")
+    .delete()
+    .eq("id", itemId)
+    .eq("event_id", eventId);
+  if (error) throw new Error(`Failed to delete budget item: ${error.message}`);
+  revalidatePath(`/events/${eventId}`);
+}
+
+// A participant sets their own flags, allowed at any event status until
+// charging is activated (specs/pix-payments.md §4, specs/event-budget.md §6.2).
+export async function setConsumptionFlags(
+  eventId: string,
+  flags: { noAlcohol: boolean; noMeat: boolean }
+) {
+  const user = await requireUser();
+  const event = await getEvent(eventId);
+  if (!event) throw new Error("Event not found");
+
+  const membership = await getMembership(eventId, user.id);
+  if (!canEnterEvent(user, event, membership)) {
+    throw new Error("You don't have access to this event");
+  }
+
+  const supabase = createServerSupabaseClient();
+  const { data: settings, error: sError } = await supabase
+    .from("event_charge_settings")
+    .select("event_id")
+    .eq("event_id", eventId)
+    .maybeSingle();
+  if (sError) throw new Error(`Failed to check charging: ${sError.message}`);
+  if (settings) {
+    throw new Error("Charging is active — ask the admin to change your flags");
+  }
+
+  const values = {
+    no_alcohol: flags.noAlcohol,
+    no_meat: flags.noMeat,
+  };
+  if (membership) {
+    const { error } = await supabase
+      .from("event_memberships")
+      .update(values)
+      .eq("id", membership.id);
+    if (error) throw new Error(`Failed to save flags: ${error.message}`);
+  } else {
+    // The creator (or an admin) enters without a membership row; flags live
+    // on event_memberships, so materialize their implicit approval.
+    const now = new Date().toISOString();
+    const { error } = await supabase.from("event_memberships").insert({
+      event_id: eventId,
+      user_id: user.id,
+      status: "approved",
+      requested_at: now,
+      decided_at: now,
+      ...values,
+    });
+    if (error) throw new Error(`Failed to save flags: ${error.message}`);
+  }
   revalidatePath(`/events/${eventId}`);
 }
 
