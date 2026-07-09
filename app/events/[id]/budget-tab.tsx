@@ -6,13 +6,23 @@ import {
   type BudgetItem,
   type ChargeSettings,
 } from "@/lib/budget";
+import {
+  reconcileChargeWithPsp,
+  type PixChargeWithUser,
+} from "@/lib/charges";
+import { deactivateCharging, syncChargeStatuses } from "@/app/actions";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { ConfirmActionButton } from "@/components/confirm-action-button";
+import { ActivateChargingForm } from "./activate-charging-form";
 import {
   BudgetItemsEditor,
   type EditableBudgetItem,
 } from "./budget-items-editor";
 import { FlagsEditor } from "./flags-editor";
+import { PaymentBoard } from "./payment-board";
+import { PaymentCard } from "./payment-card";
 
 const EXEMPTION_LABELS: Record<BudgetItem["exemption"], string> = {
   none: "Everyone",
@@ -21,15 +31,16 @@ const EXEMPTION_LABELS: Record<BudgetItem["exemption"], string> = {
 };
 
 // The Budget tab (specs/event-budget.md §6): itemized costs, live per-person
-// shares, and the viewer's own flags + share. Charge activation and payment
-// UI land here with the Pix integration (specs/pix-payments.md).
-export function BudgetTab({
+// shares, the viewer's own flags + share, and — the money story — the Pix
+// payment card, activation form and admin board (specs/pix-payments.md §7).
+export async function BudgetTab({
   event,
   viewerId,
   isAdmin,
   participants,
   items,
   chargeSettings,
+  charges,
 }: {
   event: EventRow;
   viewerId: string;
@@ -37,6 +48,7 @@ export function BudgetTab({
   participants: Participant[];
   items: BudgetItem[];
   chargeSettings: ChargeSettings | null;
+  charges: PixChargeWithUser[];
 }) {
   const shares = computeShares(
     items,
@@ -74,8 +86,102 @@ export function BudgetTab({
       : null,
   ].filter(Boolean);
 
+  // The viewer's live (or kept paid) charge; refunded rows are history.
+  // A pending one is reconciled against the PSP on the spot — the webhook
+  // fallback (specs/pix-payments.md §5), and the only confirmation path in
+  // local dev, which MP's webhooks can't reach.
+  let myCharge =
+    charges.find(
+      (c) => c.user_id === viewerId && c.status !== "refunded"
+    ) ?? null;
+  if (myCharge?.status === "pending") {
+    myCharge = await reconcileChargeWithPsp(myCharge);
+  }
+
+  // Budget-derived prices in the base − deductions shape the activation form
+  // snapshots (specs/event-budget.md §5).
+  const mapped = {
+    baseCents: fullPrice,
+    alcoholCents: shares.alcoholShare,
+    meatCents: shares.meatShare,
+  };
+  // Never reprice silently — only surface the drift (specs/event-budget.md §6.3).
+  const drift =
+    chargeSettings !== null &&
+    items.length > 0 &&
+    (chargeSettings.base_price_cents !== mapped.baseCents ||
+      chargeSettings.no_alcohol_deduction_cents !== mapped.alcoholCents ||
+      chargeSettings.no_meat_deduction_cents !== mapped.meatCents);
+
   return (
     <>
+      {chargeSettings && myCharge && (
+        <PaymentCard
+          eventId={event.id}
+          charge={myCharge}
+          settings={chargeSettings}
+          flags={viewerFlags}
+        />
+      )}
+
+      {isAdmin && !chargeSettings && (
+        <Card className="gap-3 p-4">
+          <h2 className="font-medium">Charging</h2>
+          {event.status === "finalized" ? (
+            <ActivateChargingForm
+              eventId={event.id}
+              participants={participants.map((p) => ({
+                userId: p.userId,
+                name: p.name,
+                email: p.email,
+                noAlcohol: p.noAlcohol,
+                noMeat: p.noMeat,
+              }))}
+              prefill={items.length > 0 ? mapped : null}
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Finalize a data primeiro — cobranças só podem ser ativadas com o
+              evento finalizado.
+            </p>
+          )}
+        </Card>
+      )}
+
+      {isAdmin && chargeSettings && (
+        <Card className="gap-3 p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="font-medium">Payments</h2>
+            <div className="flex items-center gap-2">
+              <form action={syncChargeStatuses.bind(null, event.id)}>
+                <Button type="submit" size="xs" variant="outline">
+                  Sync statuses
+                </Button>
+              </form>
+              <ConfirmActionButton
+                action={deactivateCharging.bind(null, event.id)}
+                title="Deactivate charging?"
+                description="Every unpaid charge is canceled — the Pix codes stop working. Paid charges are kept; refunds stay manual. Reactivating later creates fresh charges for anyone who hasn't paid."
+                confirmLabel="Deactivate"
+              >
+                Deactivate
+              </ConfirmActionButton>
+            </div>
+          </div>
+          {drift && (
+            <p className="text-sm text-warning-foreground">
+              O orçamento mudou desde a ativação — desative e reative a
+              cobrança para reprecificar.
+            </p>
+          )}
+          <PaymentBoard
+            eventId={event.id}
+            participants={participants}
+            charges={charges}
+          />
+        </Card>
+      )}
+
       <Card className="gap-3 p-4">
         <div className="flex items-baseline justify-between">
           <h2 className="font-medium">Budget items</h2>

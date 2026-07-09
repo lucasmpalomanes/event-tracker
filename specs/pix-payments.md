@@ -144,28 +144,40 @@ The PSP is **Mercado Pago** (decision rationale in [§9](#9-resolved-decisions))
 The app talks to it through a thin adapter in `lib/pix.ts` exposing exactly
 three operations:
 
-1. `createCharge({ txid, amountCents, expiresInSeconds })` →
-   `{ brcode, pspChargeId, expiresAt }` — creates an immediate dynamic charge
-   (`cob`). The `devedor` field is **not** sent.
-2. `cancelCharge(txid)` — marks the PSP-side charge as removed, where the PSP
-   supports it (best-effort; the local row is canceled regardless).
-3. `verifyWebhook(request)` → `{ txid, paidAt } | reject` — authenticates an
-   incoming webhook call and extracts the paid charge.
+1. `createCharge({ txid, amountCents, payerEmail })` →
+   `{ brcode, pspChargeId, expiresAt }` — creates an immediate dynamic
+   charge. The `devedor` field is **not** sent.
+2. `cancelCharge(pspChargeId)` — marks the PSP-side charge as removed, where
+   the PSP supports it (best-effort; the local row is canceled regardless).
+3. `verifyWebhook(request)` → `{ orderId } | reject` — authenticates an
+   incoming webhook call; the payment's truth is then read back with
+   `getChargeStatus(pspChargeId)` (MP's webhook only says "something
+   changed").
 
 Keeping every PSP-specific detail (auth, payload shapes) behind this adapter
 means switching PSPs is a one-file change.
 
-**Mercado Pago mapping** (inside the adapter):
-- A charge is a **Payments API** payment with `payment_method_id: "pix"`.
-  Mercado Pago is not the BCB-standard Pix API, so our `txid` travels in
-  **`external_reference`**; MP's own payment id is stored as `psp_charge_id`
-  (and is what webhook payloads carry — the adapter resolves it back to the
-  charge, falling back to `external_reference`).
+**Mercado Pago mapping** (inside the adapter; switched from the legacy
+Payments API to the **Orders API** on 2026-07-09 — MP marks Payments as
+"versão anterior" for new integrations):
+- A charge is an order: `POST /v1/orders` with `type: "online"`,
+  `processing_mode: "automatic"` and one Pix transaction
+  (`payment_method: { id: "pix", type: "bank_transfer" }`). Mercado Pago is
+  not the BCB-standard Pix API, so our `txid` travels in
+  **`external_reference`**; MP's order id (`ORD…`) is stored as
+  `psp_charge_id` (and is what webhook payloads carry as `data.id` — the
+  adapter resolves it back to the charge).
+- MP requires the **payer's email** on the order; we send the participant's
+  account email (still no CPF/`devedor`).
 - The copia-e-cola payload comes back in
-  `point_of_interaction.transaction_data.qr_code` → our `brcode`.
-- Expiration via `date_of_expiration`.
+  `transactions.payments[].payment_method.qr_code` → our `brcode`.
+- Expiration via `expiration_time` (ISO-8601 duration, `P7D`).
+- Cancelation via `POST /v1/orders/{id}/cancel` (only while unpaid). Paid =
+  order `status: "processed"`, read back with `GET /v1/orders/{id}`.
 - Auth is a server-side **access token** — no client certificate. Sandbox:
-  MP test credentials point a dev deployment at a parallel test environment.
+  MP test credentials point a dev deployment at a parallel test environment;
+  in dev the adapter sends `payer.first_name: "APRO"`, the magic value that
+  makes the test environment auto-approve the payment.
 - Funds settle in the Mercado Pago account; moving them to a bank account is
   a manual (free) withdrawal, outside the app.
 
@@ -185,9 +197,15 @@ payer cannot alter it). No `devedor`.
   was stale) and flags it for admin attention.
 - This is the **one path that doesn't go through Auth0** — it authenticates the
   PSP, not a user.
+- **Query fallback** *(added 2026-07-09)*: a viewer's own `pending` charge is
+  reconciled against the PSP on page load, and the admin board has a "sync
+  statuses" action doing the same for all pending charges. Covers webhook
+  misses in production and local dev, where MP's webhooks can't reach the
+  app.
 
-**Credentials** live in env vars (`PIX_*`), server-side only, same posture as
-the Supabase secret key.
+**Credentials** live in env vars (`MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`),
+server-side only, same posture as the Supabase secret key. Test credentials
+in `.env.local`, production credentials on Vercel.
 
 ## 6. Lifecycle & rules
 

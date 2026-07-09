@@ -11,6 +11,7 @@ import {
   listPendingRequests,
 } from "@/lib/events";
 import { getChargeSettings, listBudgetItems } from "@/lib/budget";
+import { listEventCharges, type PixChargeWithUser } from "@/lib/charges";
 import { formatDay } from "@/lib/utils";
 import { updateEventDetails } from "@/app/actions";
 import { BudgetTab } from "./budget-tab";
@@ -58,6 +59,10 @@ export default async function EventPage({
       getChargeSettings(id),
     ]);
   const pendingRequests = user.is_admin ? await listPendingRequests(id) : [];
+  // Charges only exist while charging is active (or as kept paid history).
+  const charges: PixChargeWithUser[] = chargeSettings
+    ? await listEventCharges(id)
+    : [];
 
   return (
     <div className="flex flex-col flex-1">
@@ -157,6 +162,7 @@ export default async function EventPage({
               participants={participants}
               items={budgetItems}
               chargeSettings={chargeSettings}
+              charges={charges}
             />
           }
         />
