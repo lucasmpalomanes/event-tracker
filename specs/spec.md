@@ -29,7 +29,8 @@ is intentionally **out of scope** for this version — see [§9 Future work](#9-
 - Comments, chat, or attachments on events.
 - Public (non-authenticated) voting.
 - Time-of-day / hourly availability (day-granularity only).
-- Payments, ticketing, or RSVP headcount limits.
+- Payments, ticketing, or RSVP headcount limits. *(Payments are now specced
+  as a follow-up feature — see [`pix-payments.md`](./pix-payments.md).)*
 
 ## 3. Roles & permissions
 
@@ -179,6 +180,12 @@ simply disappears from the ranking.
   count/entry point for **pending access requests**.
 
 ### 5.2 Date page (`/events/[id]`)
+
+> *(Amended 2026-07-08 by [`event-budget.md`](./event-budget.md) §6.1: the
+> content below the event header now sits in **tabs** — "Dates" holds
+> everything in this section unchanged; "Budget" is the new budget/payments
+> tab.)*
+
 The core screen. A **calendar view** covering the event's date window.
 **Access-gated:** only users with an `approved` membership (or the admin) reach
 this page; anyone else is redirected back to the list with their request status.
@@ -242,9 +249,11 @@ there, or delete stray/mistaken votes without kicking anyone.
 **Rules**
 
 - Admin-only; enforced in the server layer like all other writes ([§6](#6-authentication--identity)).
-- Allowed while the event is **`open` or `closed`**; **not** on `finalized`
-  events — a finalized event's record is frozen, consistent with one-way
-  finalization ([§5.2](#52-date-page)).
+- Allowed on **any event status, including `finalized`** — people can change
+  their mind about attending after the date is set. *(Revised 2026-07-08 —
+  originally forbidden on `finalized` events.)* On a finalized event with
+  active charging, removal also interacts with the participant's Pix charge —
+  see [`pix-payments.md`](./pix-payments.md) §6.
 - The event's **creator cannot be removed** (their membership is implicit,
   [§4](#event_memberships)). Admins can still clear/remove the creator's votes,
   including their own.
@@ -307,9 +316,10 @@ there, or delete stray/mistaken votes without kicking anyone.
   participant from an event or remove votes ([§5.3](#53-participant--vote-removal-admin)).
   Removing a participant **deletes** their membership row and their votes (not a
   ban — they may re-request entry); vote removal comes in per-user ("clear all")
-  and per-vote (single user+day) granularity. Allowed on `open` and `closed`
-  events only; `finalized` events are frozen. Hard deletes, no notification to
-  the affected user.
+  and per-vote (single user+day) granularity. Allowed on **any** event status
+  *(revised 2026-07-08 — was `open`/`closed` only)*: people can change their
+  mind about attending after the date is finalized. Hard deletes, no
+  notification to the affected user.
 - **Notifying an approved user:** no in-app notifications in v1. For the current
   scope (a closed friends group) the admin messages people out-of-band; a user
   otherwise learns of approval by revisiting the list. In-app notifications are

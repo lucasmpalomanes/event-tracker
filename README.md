@@ -62,6 +62,8 @@ update users set is_admin = true where email = 'you@example.com';
 |---|---|
 | `specs/spec.md` | Product spec — roles, data model, screens, decisions |
 | `specs/shadcn-refactor.md` | UI refactor spec — migrate components to shadcn/ui |
+| `specs/pix-payments.md` | Pix payments spec — per-participant charges on finalized events |
+| `specs/event-budget.md` | Budget tab spec — itemized costs, per-person shares, feeds Pix pricing |
 | `supabase/schema.sql` | Database schema (run in Supabase SQL editor) |
 | `proxy.ts` | Auth0 session handling (Next 16's renamed middleware) |
 | `lib/dal.ts` | Auth gate: Auth0 session → Supabase user sync |
