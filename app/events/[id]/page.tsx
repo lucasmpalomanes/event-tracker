@@ -12,7 +12,8 @@ import {
 } from "@/lib/events";
 import { getChargeSettings, listBudgetItems } from "@/lib/budget";
 import { listEventCharges, type PixChargeWithUser } from "@/lib/charges";
-import { formatDay } from "@/lib/utils";
+import { formatDay } from "@/lib/format";
+import { getT } from "@/lib/i18n/server";
 import { updateEventDetails } from "@/app/actions";
 import { BudgetTab } from "./budget-tab";
 import { DatesTab } from "./dates-tab";
@@ -49,6 +50,9 @@ export default async function EventPage({
   const { tab } = await searchParams;
   const initialTab = tab === "budget" ? "budget" : "dates";
 
+  const { t, locale } = await getT("event");
+  const { t: tCommon } = await getT("common");
+
   // Participants feed both the admin list and the budget shares
   // (specs/event-budget.md §5), so every viewer loads them.
   const [availability, participants, budgetItems, chargeSettings] =
@@ -76,18 +80,18 @@ export default async function EventPage({
             render={<Link href="/" />}
           >
             <ArrowLeftIcon data-icon="inline-start" />
-            Back to events
+            {tCommon("backToEvents")}
           </Button>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-semibold tracking-tight">
               {event.title}
             </h1>
             <Badge variant="outline">
-              {event.status === "open"
-                ? "Voting open"
-                : event.status === "closed"
-                  ? "Voting closed"
-                  : `Finalized: ${formatDay(event.finalized_date!)}`}
+              {event.status === "finalized"
+                ? tCommon("status.finalizedOn", {
+                    date: formatDay(event.finalized_date!, locale),
+                  })
+                : tCommon(`status.${event.status}`)}
             </Badge>
           </div>
           {event.description && (
@@ -107,7 +111,7 @@ export default async function EventPage({
                   />
                 }
               >
-                Edit details
+                {t("editDetails")}
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <form
@@ -115,7 +119,9 @@ export default async function EventPage({
                   className="mt-3 flex max-w-md flex-col gap-3"
                 >
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description">
+                      {t("form.descriptionPlain")}
+                    </Label>
                     <Textarea
                       id="description"
                       name="description"
@@ -124,7 +130,7 @@ export default async function EventPage({
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="location">Location</Label>
+                    <Label htmlFor="location">{t("form.locationPlain")}</Label>
                     <Input
                       id="location"
                       name="location"
@@ -132,7 +138,7 @@ export default async function EventPage({
                     />
                   </div>
                   <Button type="submit" size="sm" className="self-start">
-                    Save
+                    {tCommon("save")}
                   </Button>
                 </form>
               </CollapsibleContent>

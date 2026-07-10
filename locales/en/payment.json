@@ -1,0 +1,69 @@
+{
+  "yourPayment": "Your payment",
+  "expiresOn": "Expires on {{date}}",
+  "qrAlt": "Pix QR code",
+  "instructions": "Pay via the QR code, or copy the Pix code (copia e cola) and paste it into your bank app.",
+  "copy": "Copy code",
+  "copied": "Copied",
+  "paidBadge": "Paid ✓",
+  "paidOn": "on {{date}}",
+  "paidManually": "(confirmed by the organizer)",
+  "expiredBadge": "Code expired",
+  "regenerateMine": "Generate new code",
+  "status": {
+    "paid": "Paid",
+    "manual": "(manual)",
+    "pending": "Pending · expires {{date}}",
+    "expired": "Expired",
+    "refunded": "Refunded"
+  },
+  "removed": "removed",
+  "flags": {
+    "drinks": "drinks",
+    "noDrinks": "doesn't drink",
+    "eatsMeat": "eats meat",
+    "noMeat": "doesn't eat meat"
+  },
+  "changeFlags": {
+    "title": "Change {{name}}'s flags?",
+    "regenDescription": "Their unpaid charge will be canceled and regenerated at the new amount (new Pix code).",
+    "nextDescription": "This changes how much they owe on the next charge.",
+    "confirm": "Change"
+  },
+  "markPaid": {
+    "label": "Mark paid",
+    "title": "Mark {{name}} as paid?",
+    "description": "Use this when the money arrived outside the Pix code — webhook missed, paid in cash. It is recorded as a manual override.",
+    "confirm": "Mark paid"
+  },
+  "regenerate": "Regenerate",
+  "cancelCharge": {
+    "label": "Cancel",
+    "title": "Cancel {{name}}'s charge?",
+    "description": "They won't be able to pay this code anymore. You can regenerate later by editing their flags or reactivating.",
+    "confirm": "Cancel charge"
+  },
+  "markRefunded": {
+    "label": "Mark refunded",
+    "title": "Mark {{name}} as refunded?",
+    "description": "Only confirm after sending the money back manually from your bank app — the app never moves money. The amount leaves the collected total.",
+    "confirm": "Mark refunded"
+  },
+  "totals": {
+    "collected": "Collected",
+    "outstanding": "Outstanding",
+    "refunded": "Refunded"
+  },
+  "errors": {
+    "notFinalized": "Charging can only be activated on a finalized event",
+    "pricesPositive": "Prices must be positive values",
+    "minimumPositive": "Base price minus both deductions must stay above zero",
+    "onlyUnpaidPaid": "Only an unpaid charge can be marked as paid",
+    "onlyPaidRefunded": "Only a paid charge can be marked as refunded",
+    "onlyUnpaidCanceled": "Only an unpaid charge can be canceled",
+    "onlyExpiredRegenerated": "Only an expired charge can be regenerated",
+    "noCharge": "You have no charge on this event",
+    "chargeNotFound": "Charge not found",
+    "flagsLocked": "Charging is active — ask the admin to change your flags"
+  }
+}

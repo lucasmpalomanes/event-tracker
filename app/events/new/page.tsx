@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeftIcon } from "lucide-react";
 import { getCurrentUser } from "@/lib/dal";
+import { getT } from "@/lib/i18n/server";
 import { createEvent } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,6 +15,9 @@ export default async function NewEventPage() {
   if (!user) redirect("/auth/login");
   if (!user.is_admin) redirect("/");
 
+  const { t } = await getT("event");
+  const { t: tCommon } = await getT("common");
+
   return (
     <div className="flex flex-col flex-1">
       <main className="mx-auto flex w-full max-w-xl flex-col gap-6 px-8 py-12">
@@ -25,25 +29,27 @@ export default async function NewEventPage() {
           render={<Link href="/" />}
         >
           <ArrowLeftIcon data-icon="inline-start" />
-          Back to events
+          {tCommon("backToEvents")}
         </Button>
-        <h1 className="text-2xl font-semibold tracking-tight">Create event</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {t("createEvent")}
+        </h1>
         <form action={createEvent} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="title">{t("form.title")}</Label>
             <Input id="title" name="title" required />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="description">Description (optional)</Label>
+            <Label htmlFor="description">{t("form.description")}</Label>
             <Textarea id="description" name="description" rows={3} />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="location">Location (optional)</Label>
+            <Label htmlFor="location">{t("form.location")}</Label>
             <Input id="location" name="location" />
           </div>
           <div className="flex gap-4">
             <div className="flex flex-1 flex-col gap-2">
-              <Label htmlFor="window_start">First candidate day</Label>
+              <Label htmlFor="window_start">{t("form.firstDay")}</Label>
               <Input
                 id="window_start"
                 name="window_start"
@@ -52,13 +58,11 @@ export default async function NewEventPage() {
               />
             </div>
             <div className="flex flex-1 flex-col gap-2">
-              <Label htmlFor="window_end">Last candidate day</Label>
+              <Label htmlFor="window_end">{t("form.lastDay")}</Label>
               <Input id="window_end" name="window_end" type="date" required />
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            The window may span at most 6 months.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("form.windowCap")}</p>
           <div className="flex items-start gap-2">
             <Checkbox
               id="auto_approve_members"
@@ -67,16 +71,15 @@ export default async function NewEventPage() {
             />
             <div className="flex flex-col gap-1">
               <Label htmlFor="auto_approve_members">
-                Auto-approve new members
+                {t("form.autoApprove")}
               </Label>
               <p className="text-xs text-muted-foreground">
-                Anyone who asks to enter gets access immediately, without
-                waiting for your approval. You can change this later.
+                {t("form.autoApproveHint")}
               </p>
             </div>
           </div>
           <Button type="submit" size="lg" className="mt-2">
-            Create event
+            {t("createEvent")}
           </Button>
         </form>
       </main>

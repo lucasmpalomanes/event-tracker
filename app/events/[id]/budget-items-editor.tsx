@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import { XIcon } from "lucide-react";
 import {
   addBudgetItem,
@@ -24,15 +25,7 @@ export type EditableBudgetItem = {
   exemption: string;
 };
 
-const EXEMPTION_LABELS: Record<string, string> = {
-  none: "Everyone",
-  alcohol: "Drinkers",
-  meat: "Meat-eaters",
-};
-
-function parseCents(amountReais: string): number {
-  return Math.round(Number(amountReais.replace(",", ".")) * 100);
-}
+const EXEMPTIONS = ["none", "alcohol", "meat"] as const;
 
 function ExemptionSelect({
   value,
@@ -43,9 +36,13 @@ function ExemptionSelect({
   onChange: (value: string) => void;
   disabled: boolean;
 }) {
+  const { t } = useTranslation("budget");
+  const items = Object.fromEntries(
+    EXEMPTIONS.map((v) => [v, t(`exemption.${v}`)])
+  );
   return (
     <Select
-      items={EXEMPTION_LABELS}
+      items={items}
       value={value}
       onValueChange={(v) => onChange(String(v))}
       disabled={disabled}
@@ -54,14 +51,18 @@ function ExemptionSelect({
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {Object.entries(EXEMPTION_LABELS).map(([v, label]) => (
+        {EXEMPTIONS.map((v) => (
           <SelectItem key={v} value={v}>
-            {label}
+            {t(`exemption.${v}`)}
           </SelectItem>
         ))}
       </SelectContent>
     </Select>
   );
+}
+
+function parseCents(amountReais: string): number {
+  return Math.round(Number(amountReais.replace(",", ".")) * 100);
 }
 
 function ItemRow({
@@ -71,6 +72,7 @@ function ItemRow({
   eventId: string;
   item: EditableBudgetItem;
 }) {
+  const { t } = useTranslation("budget");
   const [name, setName] = useState(item.name);
   const [amount, setAmount] = useState(item.amountReais);
   const [exemption, setExemption] = useState(item.exemption);
@@ -84,14 +86,14 @@ function ItemRow({
   return (
     <li className="flex flex-wrap items-center gap-2">
       <Input
-        aria-label="Item name"
+        aria-label={t("editor.itemName")}
         value={name}
         onChange={(e) => setName(e.target.value)}
         disabled={isPending}
         className="h-8 flex-1 basis-40"
       />
       <Input
-        aria-label="Amount (R$)"
+        aria-label={t("editor.amount")}
         type="number"
         min="0.01"
         step="0.01"
@@ -121,13 +123,13 @@ function ItemRow({
           })
         }
       >
-        {isPending ? "Saving…" : "Save"}
+        {isPending ? t("editor.saving") : t("editor.save")}
       </Button>
       {/* No confirmation — items are cheap to re-add (specs/event-budget.md §6.3). */}
       <Button
         size="icon-xs"
         variant="ghost"
-        aria-label={`Remove ${item.name}`}
+        aria-label={t("editor.remove", { name: item.name })}
         className="text-muted-foreground hover:text-destructive"
         disabled={isPending}
         onClick={() =>
@@ -149,6 +151,7 @@ export function BudgetItemsEditor({
   eventId: string;
   items: EditableBudgetItem[];
 }) {
+  const { t } = useTranslation("budget");
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [exemption, setExemption] = useState("none");
@@ -176,17 +179,17 @@ export function BudgetItemsEditor({
         }}
       >
         <Input
-          aria-label="New item name"
-          placeholder="Item (picanha, carvão…)"
+          aria-label={t("editor.newItemName")}
+          placeholder={t("editor.itemPlaceholder")}
           value={name}
           onChange={(e) => setName(e.target.value)}
           disabled={isPending}
           className="h-8 flex-1 basis-40"
         />
         <Input
-          aria-label="New item amount (R$)"
+          aria-label={t("editor.newItemAmount")}
           type="number"
-          placeholder="R$"
+          placeholder={t("editor.amountPlaceholder")}
           min="0.01"
           step="0.01"
           value={amount}
@@ -204,7 +207,7 @@ export function BudgetItemsEditor({
           size="xs"
           disabled={isPending || !name.trim() || !(parseCents(amount) > 0)}
         >
-          {isPending ? "Adding…" : "Add item"}
+          {isPending ? t("editor.adding") : t("editor.add")}
         </Button>
       </form>
     </div>

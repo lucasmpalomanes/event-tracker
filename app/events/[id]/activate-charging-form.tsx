@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import { activateCharging } from "@/app/actions";
 import { formatBRL } from "@/lib/format";
 import {
@@ -45,6 +46,8 @@ export function ActivateChargingForm({
   participants: ActivationParticipant[];
   prefill: { baseCents: number; alcoholCents: number; meatCents: number } | null;
 }) {
+  const { t } = useTranslation("budget");
+  const { t: tCommon } = useTranslation("common");
   const toReais = (cents: number) => (cents / 100).toFixed(2);
   const [base, setBase] = useState(prefill ? toReais(prefill.baseCents) : "");
   const [alcohol, setAlcohol] = useState(
@@ -83,7 +86,7 @@ export function ActivateChargingForm({
         });
       } catch (cause) {
         setError(
-          cause instanceof Error ? cause.message : "Activation failed"
+          cause instanceof Error ? cause.message : t("activation.failed")
         );
       }
     });
@@ -93,7 +96,7 @@ export function ActivateChargingForm({
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-3 gap-3">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="base-price">Base price (R$)</Label>
+          <Label htmlFor="base-price">{t("activation.basePrice")}</Label>
           <Input
             id="base-price"
             inputMode="decimal"
@@ -102,7 +105,7 @@ export function ActivateChargingForm({
           />
         </div>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="ded-alcohol">− no alcohol</Label>
+          <Label htmlFor="ded-alcohol">{t("activation.noAlcoholDeduction")}</Label>
           <Input
             id="ded-alcohol"
             inputMode="decimal"
@@ -111,7 +114,7 @@ export function ActivateChargingForm({
           />
         </div>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="ded-meat">− no meat</Label>
+          <Label htmlFor="ded-meat">{t("activation.noMeatDeduction")}</Label>
           <Input
             id="ded-meat"
             inputMode="decimal"
@@ -123,8 +126,7 @@ export function ActivateChargingForm({
 
       {valid && !minimumOk && (
         <p className="text-sm text-warning-foreground">
-          Base price minus both deductions must stay above zero — adicione um
-          item que todos dividem, ou trate os isentos manualmente.
+          {t("activation.minimumWarning")}
         </p>
       )}
 
@@ -146,20 +148,20 @@ export function ActivateChargingForm({
           disabled={!minimumOk || isPending}
           render={<Button size="sm" className="self-start" />}
         >
-          {isPending ? "Activating…" : "Ativar cobrança"}
+          {isPending ? t("activation.pending") : t("activation.cta")}
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Activate charging?</AlertDialogTitle>
+            <AlertDialogTitle>{t("activation.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This creates a Pix charge for each of the{" "}
-              {participants.length} approved participants. Prices are frozen —
-              changing them later means deactivating and reactivating.
+              {t("activation.description", { count: participants.length })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirm}>Activate</AlertDialogAction>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirm}>
+              {t("activation.confirm")}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

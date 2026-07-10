@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import {
   adminSetConsumptionFlags,
   cancelParticipantCharge,
@@ -7,32 +8,46 @@ import {
 } from "@/app/actions";
 import type { PixChargeWithUser } from "@/lib/charges";
 import type { Participant } from "@/lib/events";
-import { formatBRL } from "@/lib/format";
-import { formatDay } from "@/lib/utils";
+import { formatBRL, formatDay } from "@/lib/format";
+import { getT } from "@/lib/i18n/server";
+import type { Locale } from "@/lib/i18n/config";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 
-function StatusBadge({ charge }: { charge: PixChargeWithUser }) {
+function StatusBadge({
+  charge,
+  t,
+  locale,
+}: {
+  charge: PixChargeWithUser;
+  t: TFunction<"payment">;
+  locale: Locale;
+}) {
   switch (charge.status) {
     case "paid":
       return (
         <Badge>
-          Paid{charge.paid_manually ? " (manual)" : ""}
-          {charge.paid_at ? ` · ${formatDay(charge.paid_at.slice(0, 10))}` : ""}
+          {t("status.paid")}
+          {charge.paid_manually ? ` ${t("status.manual")}` : ""}
+          {charge.paid_at
+            ? ` · ${formatDay(charge.paid_at.slice(0, 10), locale)}`
+            : ""}
         </Badge>
       );
     case "pending":
       return (
         <Badge variant="outline">
-          Pending · expira {formatDay(charge.expires_at.slice(0, 10))}
+          {t("status.pending", {
+            date: formatDay(charge.expires_at.slice(0, 10), locale),
+          })}
         </Badge>
       );
     case "expired":
-      return <Badge variant="outline">Expired</Badge>;
+      return <Badge variant="outline">{t("status.expired")}</Badge>;
     case "refunded":
-      return <Badge variant="outline">Refunded</Badge>;
+      return <Badge variant="outline">{t("status.refunded")}</Badge>;
     default:
       return null;
   }
@@ -47,6 +62,7 @@ function FlagToggle({
   flags,
   flag,
   hasUnpaidCharge,
+  t,
 }: {
   eventId: string;
   userId: string;
@@ -54,29 +70,30 @@ function FlagToggle({
   flags: { noAlcohol: boolean; noMeat: boolean };
   flag: "noAlcohol" | "noMeat";
   hasUnpaidCharge: boolean;
+  t: TFunction<"payment">;
 }) {
   const current = flags[flag];
   const label =
     flag === "noAlcohol"
       ? current
-        ? "não bebe"
-        : "bebe"
+        ? t("flags.noDrinks")
+        : t("flags.drinks")
       : current
-        ? "não come carne"
-        : "come carne";
+        ? t("flags.noMeat")
+        : t("flags.eatsMeat");
   return (
     <ConfirmActionButton
       action={adminSetConsumptionFlags.bind(null, eventId, userId, {
         ...flags,
         [flag]: !current,
       })}
-      title={`Change ${who}'s flags?`}
+      title={t("changeFlags.title", { name: who })}
       description={
         hasUnpaidCharge
-          ? "Their unpaid charge will be canceled and regenerated at the new amount (new Pix code)."
-          : "This changes how much they owe on the next charge."
+          ? t("changeFlags.regenDescription")
+          : t("changeFlags.nextDescription")
       }
-      confirmLabel="Change"
+      confirmLabel={t("changeFlags.confirm")}
       confirmVariant="default"
       variant="ghost"
       className="text-muted-foreground"
@@ -89,7 +106,7 @@ function FlagToggle({
 // Admin payment board (specs/pix-payments.md §7.2): every approved
 // participant with flags, amount, status and row actions, plus kept rows of
 // removed participants and the collected / outstanding / refunded totals.
-export function PaymentBoard({
+export async function PaymentBoard({
   eventId,
   participants,
   charges,
@@ -98,6 +115,8 @@ export function PaymentBoard({
   participants: Participant[];
   charges: PixChargeWithUser[];
 }) {
+  const { t, locale } = await getT("payment");
+
   const participantIds = new Set(participants.map((p) => p.userId));
   const liveByUser = new Map(
     charges
@@ -129,8 +148,8 @@ export function PaymentBoard({
     >
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <span className="font-medium">{who}</span>
-        {removed && <Badge variant="outline">removed</Badge>}
-        {charge && <StatusBadge charge={charge} />}
+        {removed && <Badge variant="outline">{t("removed")}</Badge>}
+        {charge && <StatusBadge charge={charge} t={t} locale={locale} />}
         <span className="ms-auto font-medium">
           {charge ? formatBRL(charge.amount_cents) : "—"}
         </span>
@@ -147,6 +166,7 @@ export function PaymentBoard({
               hasUnpaidCharge={
                 charge?.status === "pending" || charge?.status === "expired"
               }
+              t={t}
             />
             <FlagToggle
               eventId={eventId}
@@ -157,6 +177,7 @@ export function PaymentBoard({
               hasUnpaidCharge={
                 charge?.status === "pending" || charge?.status === "expired"
               }
+              t={t}
             />
           </>
         )}
@@ -164,36 +185,36 @@ export function PaymentBoard({
           <>
             <ConfirmActionButton
               action={markChargePaid.bind(null, eventId, charge.id)}
-              title={`Mark ${who} as paid?`}
-              description="Use this when the money arrived outside the Pix code — webhook missed, paid in cash. It is recorded as a manual override."
-              confirmLabel="Mark paid"
+              title={t("markPaid.title", { name: who })}
+              description={t("markPaid.description")}
+              confirmLabel={t("markPaid.confirm")}
               confirmVariant="default"
             >
-              Mark paid
+              {t("markPaid.label")}
             </ConfirmActionButton>
             <form action={regenerateParticipantCharge.bind(null, eventId, charge.id)}>
               <Button type="submit" size="xs" variant="outline">
-                Regenerate
+                {t("regenerate")}
               </Button>
             </form>
             <ConfirmActionButton
               action={cancelParticipantCharge.bind(null, eventId, charge.id)}
-              title={`Cancel ${who}'s charge?`}
-              description="They won't be able to pay this code anymore. You can regenerate later by editing their flags or reactivating."
-              confirmLabel="Cancel charge"
+              title={t("cancelCharge.title", { name: who })}
+              description={t("cancelCharge.description")}
+              confirmLabel={t("cancelCharge.confirm")}
             >
-              Cancel
+              {t("cancelCharge.label")}
             </ConfirmActionButton>
           </>
         )}
         {charge && charge.status === "paid" && (
           <ConfirmActionButton
             action={markChargeRefunded.bind(null, eventId, charge.id)}
-            title={`Mark ${who} as refunded?`}
-            description="Only confirm after sending the money back manually from your bank app — the app never moves money. The amount leaves the collected total."
-            confirmLabel="Mark refunded"
+            title={t("markRefunded.title", { name: who })}
+            description={t("markRefunded.description")}
+            confirmLabel={t("markRefunded.confirm")}
           >
-            Mark refunded
+            {t("markRefunded.label")}
           </ConfirmActionButton>
         )}
       </div>
@@ -219,16 +240,16 @@ export function PaymentBoard({
       <Separator />
       <ul className="flex flex-col gap-1 text-sm">
         <li className="flex justify-between">
-          <span>Collected</span>
+          <span>{t("totals.collected")}</span>
           <span className="font-medium">{formatBRL(collected)}</span>
         </li>
         <li className="flex justify-between">
-          <span>Outstanding</span>
+          <span>{t("totals.outstanding")}</span>
           <span className="font-medium">{formatBRL(outstanding)}</span>
         </li>
         {refunded > 0 && (
           <li className="flex justify-between text-muted-foreground">
-            <span>Refunded</span>
+            <span>{t("totals.refunded")}</span>
             <span>{formatBRL(refunded)}</span>
           </li>
         )}

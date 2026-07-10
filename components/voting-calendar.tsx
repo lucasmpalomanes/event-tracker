@@ -1,8 +1,10 @@
 "use client";
 
-import { useOptimistic, useTransition } from "react";
+import { useMemo, useOptimistic, useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import { toggleAvailability } from "@/app/actions";
 import { cn } from "@/lib/utils";
+import { weekdayInitials } from "@/lib/format";
 import {
   Tooltip,
   TooltipContent,
@@ -25,8 +27,6 @@ export type CalendarMonth = {
   cells: CalendarDay[];
 };
 
-const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
-
 // The voting grid stays a custom component (specs/shadcn-refactor.md §5.4):
 // shadcn's Calendar is a date picker, not a multi-month toggle board. Cells
 // use the shared holiday/weekend/available tokens from globals.css.
@@ -39,6 +39,10 @@ export function VotingCalendar({
   months: CalendarMonth[];
   canVote: boolean;
 }) {
+  const { t, i18n } = useTranslation("event");
+  // Weekday initials come from Intl, not from translation files
+  // (specs/i18n.md §5).
+  const weekdays = useMemo(() => weekdayInitials(i18n.language), [i18n.language]);
   const [, startTransition] = useTransition();
   // day -> optimistic "mine" value, overriding the server-rendered state
   // until revalidatePath delivers fresh props.
@@ -61,7 +65,7 @@ export function VotingCalendar({
         <div key={month.label}>
           <h3 className="mb-2 text-sm font-medium">{month.label}</h3>
           <div className="grid grid-cols-7 gap-1">
-            {WEEKDAYS.map((wd, i) => (
+            {weekdays.map((wd, i) => (
               <span
                 key={i}
                 className="pb-1 text-center text-xs text-muted-foreground/70"
@@ -103,7 +107,7 @@ export function VotingCalendar({
                   <span>{cell.dom}</span>
                   {cell.inWindow && count > 0 && (
                     <span className="text-[8px] leading-none text-muted-foreground">
-                      {count} {count === 1 ? "vote" : "votes"}
+                      {t("votes", { count })}
                     </span>
                   )}
                 </button>

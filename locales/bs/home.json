@@ -1,0 +1,15 @@
+{
+  "heroLead": "Izaberite najbolji datum za sljedeće druženje. Prijavite se da vidite događaje i glasate za dane kada ste slobodni.",
+  "events": "Događaji",
+  "createEvent": "Kreiraj događaj",
+  "noEvents": "Još nema događaja.",
+  "createFirst": "Kreirajte prvi!",
+  "pendingBadge_one": "{{count}} zahtjev na čekanju",
+  "pendingBadge_few": "{{count}} zahtjeva na čekanju",
+  "pendingBadge_other": "{{count}} zahtjeva na čekanju",
+  "happeningOn": "Dešava se {{date}}",
+  "join": "Pridruži se",
+  "requestToEnter": "Zatraži pristup",
+  "awaitingApproval": "Čeka odobrenje",
+  "requestAgain": "Zatraži ponovo"
+}

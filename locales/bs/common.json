@@ -1,0 +1,38 @@
+{
+  "appName": "Gagasco",
+  "metaTitle": "Gagasco Organizer",
+  "metaDescription": "Sarajevo, evo nas",
+  "logIn": "Prijavi se",
+  "logOut": "Odjavi se",
+  "admin": "(admin)",
+  "save": "Sačuvaj",
+  "cancel": "Otkaži",
+  "language": "Jezik",
+  "backToEvents": "Nazad na događaje",
+  "status": {
+    "open": "Glasanje otvoreno",
+    "closed": "Glasanje zatvoreno",
+    "finalized": "Finalizirano",
+    "finalizedOn": "Finalizirano: {{date}}"
+  },
+  "holidays": {
+    "newYear": "Nova godina",
+    "carnival": "Karneval",
+    "goodFriday": "Veliki petak",
+    "tiradentes": "Tiradentes",
+    "labourDay": "Praznik rada",
+    "corpusChristi": "Tijelovo",
+    "independence": "Dan nezavisnosti Brazila",
+    "aparecida": "Gospa od Aparecide",
+    "allSouls": "Dušni dan",
+    "republic": "Dan Republike",
+    "blackAwareness": "Dan svijesti crnaca",
+    "christmas": "Božić"
+  },
+  "errors": {
+    "notLoggedIn": "Niste prijavljeni",
+    "adminsOnly": "Samo administratori",
+    "eventNotFound": "Događaj nije pronađen",
+    "noAccess": "Nemate pristup ovom događaju"
+  }
+}

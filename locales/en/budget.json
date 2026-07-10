@@ -1,0 +1,78 @@
+{
+  "charging": "Charging",
+  "finalizeFirst": "Finalize the date first — charging can only be activated on a finalized event.",
+  "payments": "Payments",
+  "syncStatuses": "Sync statuses",
+  "deactivate": {
+    "label": "Deactivate",
+    "title": "Deactivate charging?",
+    "description": "Every unpaid charge is canceled — the Pix codes stop working. Paid charges are kept; refunds stay manual. Reactivating later creates fresh charges for anyone who hasn't paid."
+  },
+  "drift": "The budget changed since activation — deactivate and reactivate charging to reprice.",
+  "items": "Budget items",
+  "total": "Total: {{amount}}",
+  "empty": "The organizer hasn't set up the budget yet.",
+  "exemption": {
+    "none": "Everyone",
+    "alcohol": "Drinkers",
+    "meat": "Meat-eaters"
+  },
+  "groupSize_one": "{{count}} person",
+  "groupSize_other": "{{count}} people",
+  "costSplit": "Cost split",
+  "headcount_one": "{{count}} participant",
+  "headcount_other": "{{count}} participants",
+  "drinkers_one": "{{count}} drinker",
+  "drinkers_other": "{{count}} drinkers",
+  "meatEaters_one": "{{count}} meat-eater",
+  "meatEaters_other": "{{count}} meat-eaters",
+  "unsplitAlcohol": "There are drink costs but no drinkers to split them — retag or remove those items.",
+  "unsplitMeat": "There are meat costs but no meat-eaters to split them — retag or remove those items.",
+  "fullPrice": "Full price",
+  "noAlcoholPrice": "No alcohol",
+  "noMeatPrice": "No meat",
+  "noAlcoholNoMeatPrice": "No alcohol + no meat",
+  "yourShare": "Your share",
+  "noItemsShare": "No items yet — your share shows up once the budget has costs.",
+  "breakdown": {
+    "noAlcohol": "− {{amount}} (doesn't drink)",
+    "noMeat": "− {{amount}} (doesn't eat meat)"
+  },
+  "flags": {
+    "noAlcohol": "I don't drink alcohol",
+    "noMeat": "I don't eat meat",
+    "hint": "These affect how much you'll pay.",
+    "locked": "Charging is active — ask the admin to change your flags."
+  },
+  "editor": {
+    "itemName": "Item name",
+    "amount": "Amount (R$)",
+    "newItemName": "New item name",
+    "newItemAmount": "New item amount (R$)",
+    "itemPlaceholder": "Item (picanha, charcoal…)",
+    "amountPlaceholder": "R$",
+    "save": "Save",
+    "saving": "Saving…",
+    "add": "Add item",
+    "adding": "Adding…",
+    "remove": "Remove {{name}}"
+  },
+  "activation": {
+    "basePrice": "Base price (R$)",
+    "noAlcoholDeduction": "− no alcohol",
+    "noMeatDeduction": "− no meat",
+    "minimumWarning": "Base price minus both deductions must stay above zero — add an item everyone splits, or handle the exempt participants manually.",
+    "cta": "Activate charging",
+    "pending": "Activating…",
+    "title": "Activate charging?",
+    "description_one": "This creates a Pix charge for the {{count}} approved participant. Prices are frozen — changing them later means deactivating and reactivating.",
+    "description_other": "This creates a Pix charge for each of the {{count}} approved participants. Prices are frozen — changing them later means deactivating and reactivating.",
+    "confirm": "Activate",
+    "failed": "Activation failed"
+  },
+  "errors": {
+    "nameRequired": "Item name is required",
+    "amountPositive": "Item amount must be a positive value",
+    "invalidExemption": "Invalid exemption group"
+  }
+}

@@ -2,8 +2,8 @@ import QRCode from "qrcode";
 import { regenerateMyCharge } from "@/app/actions";
 import type { ChargeSettings, ConsumptionFlags } from "@/lib/budget";
 import type { PixCharge } from "@/lib/charges";
-import { formatBRL } from "@/lib/format";
-import { formatDay } from "@/lib/utils";
+import { formatBRL, formatDay } from "@/lib/format";
+import { getT } from "@/lib/i18n/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,14 +23,21 @@ export async function PaymentCard({
   settings: ChargeSettings;
   flags: ConsumptionFlags;
 }) {
+  const { t, locale } = await getT("payment");
+  const { t: tBudget } = await getT("budget");
+
   // "R$ 60 − R$ 15 (não bebe) = R$ 45" — deductions come from the frozen
   // settings, so they always add up to the charge's snapshot amount.
   const deductions = [
     flags.no_alcohol && settings.no_alcohol_deduction_cents > 0
-      ? `− ${formatBRL(settings.no_alcohol_deduction_cents)} (não bebe)`
+      ? tBudget("breakdown.noAlcohol", {
+          amount: formatBRL(settings.no_alcohol_deduction_cents),
+        })
       : null,
     flags.no_meat && settings.no_meat_deduction_cents > 0
-      ? `− ${formatBRL(settings.no_meat_deduction_cents)} (não come carne)`
+      ? tBudget("breakdown.noMeat", {
+          amount: formatBRL(settings.no_meat_deduction_cents),
+        })
       : null,
   ].filter(Boolean);
 
@@ -42,10 +49,12 @@ export async function PaymentCard({
   return (
     <Card className="gap-3 p-4">
       <div className="flex items-baseline justify-between">
-        <h2 className="font-medium">Your payment</h2>
+        <h2 className="font-medium">{t("yourPayment")}</h2>
         {charge.status === "pending" && (
           <span className="text-xs text-muted-foreground">
-            Expira em {formatDay(charge.expires_at.slice(0, 10))}
+            {t("expiresOn", {
+              date: formatDay(charge.expires_at.slice(0, 10), locale),
+            })}
           </span>
         )}
       </div>
@@ -68,13 +77,12 @@ export async function PaymentCard({
           {/* eslint-disable-next-line @next/next/no-img-element -- data URL */}
           <img
             src={qrDataUrl}
-            alt="QR code do Pix"
+            alt={t("qrAlt")}
             className="size-40 rounded-md border bg-white"
           />
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             <p className="text-xs text-muted-foreground">
-              Pague pelo QR code ou copie o código Pix (copia e cola) e cole no
-              app do seu banco.
+              {t("instructions")}
             </p>
             <code className="max-h-24 overflow-y-auto break-all rounded-md bg-muted p-2 text-xs">
               {charge.brcode}
@@ -86,20 +94,24 @@ export async function PaymentCard({
 
       {charge.status === "paid" && (
         <p className="text-sm">
-          <Badge>Pago ✓</Badge>{" "}
+          <Badge>{t("paidBadge")}</Badge>{" "}
           <span className="text-muted-foreground">
-            em {charge.paid_at ? formatDay(charge.paid_at.slice(0, 10)) : "—"}
-            {charge.paid_manually && " (confirmado pelo organizador)"}
+            {charge.paid_at
+              ? t("paidOn", {
+                  date: formatDay(charge.paid_at.slice(0, 10), locale),
+                })
+              : "—"}
+            {charge.paid_manually && ` ${t("paidManually")}`}
           </span>
         </p>
       )}
 
       {charge.status === "expired" && (
         <div className="flex flex-wrap items-center gap-3">
-          <Badge variant="outline">Código expirado</Badge>
+          <Badge variant="outline">{t("expiredBadge")}</Badge>
           <form action={regenerateMyCharge.bind(null, eventId)}>
             <Button type="submit" size="xs" variant="outline">
-              Gerar novo código
+              {t("regenerateMine")}
             </Button>
           </form>
         </div>

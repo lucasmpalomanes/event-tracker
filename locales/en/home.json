@@ -1,0 +1,14 @@
+{
+  "heroLead": "Pick the best date for your next get-together. Log in to see the events and vote on the days you're available.",
+  "events": "Events",
+  "createEvent": "Create event",
+  "noEvents": "No events yet.",
+  "createFirst": "Create the first one!",
+  "pendingBadge_one": "{{count}} pending request",
+  "pendingBadge_other": "{{count}} pending requests",
+  "happeningOn": "Happening on {{date}}",
+  "join": "Join",
+  "requestToEnter": "Request to enter",
+  "awaitingApproval": "Awaiting approval",
+  "requestAgain": "Request again"
+}

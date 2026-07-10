@@ -1,0 +1,69 @@
+{
+  "yourPayment": "Seu pagamento",
+  "expiresOn": "Expira em {{date}}",
+  "qrAlt": "QR code do Pix",
+  "instructions": "Pague pelo QR code ou copie o código Pix (copia e cola) e cole no app do seu banco.",
+  "copy": "Copiar código",
+  "copied": "Copiado",
+  "paidBadge": "Pago ✓",
+  "paidOn": "em {{date}}",
+  "paidManually": "(confirmado pelo organizador)",
+  "expiredBadge": "Código expirado",
+  "regenerateMine": "Gerar novo código",
+  "status": {
+    "paid": "Pago",
+    "manual": "(manual)",
+    "pending": "Pendente · expira {{date}}",
+    "expired": "Expirado",
+    "refunded": "Reembolsado"
+  },
+  "removed": "removido",
+  "flags": {
+    "drinks": "bebe",
+    "noDrinks": "não bebe",
+    "eatsMeat": "come carne",
+    "noMeat": "não come carne"
+  },
+  "changeFlags": {
+    "title": "Alterar as preferências de {{name}}?",
+    "regenDescription": "A cobrança não paga será cancelada e regenerada com o novo valor (novo código Pix).",
+    "nextDescription": "Isso muda quanto a pessoa deve na próxima cobrança.",
+    "confirm": "Alterar"
+  },
+  "markPaid": {
+    "label": "Marcar pago",
+    "title": "Marcar {{name}} como pago?",
+    "description": "Use quando o dinheiro chegou fora do código Pix — o webhook falhou ou a pessoa pagou em dinheiro. Fica registrado como confirmação manual.",
+    "confirm": "Marcar pago"
+  },
+  "regenerate": "Regenerar",
+  "cancelCharge": {
+    "label": "Cancelar",
+    "title": "Cancelar a cobrança de {{name}}?",
+    "description": "A pessoa não vai mais conseguir pagar este código. Você pode regenerar depois editando as preferências ou reativando a cobrança.",
+    "confirm": "Cancelar cobrança"
+  },
+  "markRefunded": {
+    "label": "Marcar reembolsado",
+    "title": "Marcar {{name}} como reembolsado?",
+    "description": "Confirme apenas depois de devolver o dinheiro manualmente pelo app do seu banco — o app nunca movimenta dinheiro. O valor sai do total arrecadado.",
+    "confirm": "Marcar reembolsado"
+  },
+  "totals": {
+    "collected": "Arrecadado",
+    "outstanding": "Em aberto",
+    "refunded": "Reembolsado"
+  },
+  "errors": {
+    "notFinalized": "A cobrança só pode ser ativada em um evento finalizado",
+    "pricesPositive": "Os preços devem ser valores positivos",
+    "minimumPositive": "O preço base menos as duas deduções deve ficar acima de zero",
+    "onlyUnpaidPaid": "Só uma cobrança não paga pode ser marcada como paga",
+    "onlyPaidRefunded": "Só uma cobrança paga pode ser marcada como reembolsada",
+    "onlyUnpaidCanceled": "Só uma cobrança não paga pode ser cancelada",
+    "onlyExpiredRegenerated": "Só uma cobrança expirada pode ser regenerada",
+    "noCharge": "Você não tem cobrança neste evento",
+    "chargeNotFound": "Cobrança não encontrada",
+    "flagsLocked": "A cobrança está ativa — peça ao organizador para alterar suas preferências"
+  }
+}

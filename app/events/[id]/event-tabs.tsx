@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // The active tab is reflected in the URL (?tab=budget) so links land on the
@@ -15,6 +16,7 @@ export function EventTabs({
   dates: ReactNode;
   budget: ReactNode;
 }) {
+  const { t } = useTranslation("event");
   const [tab, setTab] = useState<string>(initialTab);
 
   function handleValueChange(value: unknown) {
@@ -37,8 +39,8 @@ export function EventTabs({
   return (
     <Tabs value={tab} onValueChange={handleValueChange}>
       <TabsList className="mb-2 self-center">
-        <TabsTrigger value="dates">Dates</TabsTrigger>
-        <TabsTrigger value="budget">Budget</TabsTrigger>
+        <TabsTrigger value="dates">{t("tabs.dates")}</TabsTrigger>
+        <TabsTrigger value="budget">{t("tabs.budget")}</TabsTrigger>
       </TabsList>
       <TabsContent value="dates" className="flex flex-col gap-8">
         {dates}

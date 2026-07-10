@@ -1,0 +1,69 @@
+{
+  "yourPayment": "Vaše plaćanje",
+  "expiresOn": "Ističe {{date}}",
+  "qrAlt": "Pix QR kod",
+  "instructions": "Platite putem QR koda ili kopirajte Pix kod (copia e cola) i zalijepite ga u aplikaciju svoje banke.",
+  "copy": "Kopiraj kod",
+  "copied": "Kopirano",
+  "paidBadge": "Plaćeno ✓",
+  "paidOn": "{{date}}",
+  "paidManually": "(potvrdio organizator)",
+  "expiredBadge": "Kod je istekao",
+  "regenerateMine": "Generiši novi kod",
+  "status": {
+    "paid": "Plaćeno",
+    "manual": "(ručno)",
+    "pending": "Na čekanju · ističe {{date}}",
+    "expired": "Isteklo",
+    "refunded": "Vraćeno"
+  },
+  "removed": "uklonjen",
+  "flags": {
+    "drinks": "pije",
+    "noDrinks": "ne pije",
+    "eatsMeat": "jede meso",
+    "noMeat": "ne jede meso"
+  },
+  "changeFlags": {
+    "title": "Promijeniti postavke za {{name}}?",
+    "regenDescription": "Neplaćena naplata će biti otkazana i ponovo generisana s novim iznosom (novi Pix kod).",
+    "nextDescription": "Ovo mijenja koliko osoba duguje na sljedećoj naplati.",
+    "confirm": "Promijeni"
+  },
+  "markPaid": {
+    "label": "Označi plaćeno",
+    "title": "Označiti {{name}} kao plaćeno?",
+    "description": "Koristite kada je novac stigao mimo Pix koda — webhook nije stigao ili je plaćeno gotovinom. Bilježi se kao ručna potvrda.",
+    "confirm": "Označi plaćeno"
+  },
+  "regenerate": "Regeneriši",
+  "cancelCharge": {
+    "label": "Otkaži",
+    "title": "Otkazati naplatu za {{name}}?",
+    "description": "Osoba više neće moći platiti ovaj kod. Kasnije možete regenerisati izmjenom postavki ili reaktivacijom naplate.",
+    "confirm": "Otkaži naplatu"
+  },
+  "markRefunded": {
+    "label": "Označi vraćeno",
+    "title": "Označiti {{name}} kao vraćeno?",
+    "description": "Potvrdite tek nakon što ručno vratite novac iz aplikacije svoje banke — aplikacija nikada ne prenosi novac. Iznos se oduzima od prikupljenog ukupno.",
+    "confirm": "Označi vraćeno"
+  },
+  "totals": {
+    "collected": "Prikupljeno",
+    "outstanding": "Nenaplaćeno",
+    "refunded": "Vraćeno"
+  },
+  "errors": {
+    "notFinalized": "Naplata se može aktivirati samo za finalizirani događaj",
+    "pricesPositive": "Cijene moraju biti pozitivne vrijednosti",
+    "minimumPositive": "Osnovna cijena minus oba odbitka mora ostati iznad nule",
+    "onlyUnpaidPaid": "Samo neplaćena naplata može biti označena kao plaćena",
+    "onlyPaidRefunded": "Samo plaćena naplata može biti označena kao vraćena",
+    "onlyUnpaidCanceled": "Samo neplaćena naplata može biti otkazana",
+    "onlyExpiredRegenerated": "Samo istekla naplata može biti regenerisana",
+    "noCharge": "Nemate naplatu za ovaj događaj",
+    "chargeNotFound": "Naplata nije pronađena",
+    "flagsLocked": "Naplata je aktivna — zamolite administratora da promijeni vaše postavke"
+  }
+}

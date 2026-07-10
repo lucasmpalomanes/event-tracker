@@ -30,28 +30,30 @@ function iso(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-// Map of "YYYY-MM-DD" -> holiday name for one year.
+// Map of "YYYY-MM-DD" -> holiday key for one year. Values are translation
+// keys under common:holidays.* (specs/i18n.md §3) — display names come from
+// the active locale's bundle.
 function holidaysForYear(year: number): Map<string, string> {
   const easter = easterSunday(year);
   const entries: [string, string][] = [
-    [`${year}-01-01`, "Confraternização Universal"],
-    [iso(addDays(easter, -48)), "Carnaval"],
-    [iso(addDays(easter, -47)), "Carnaval"],
-    [iso(addDays(easter, -2)), "Sexta-feira Santa"],
-    [`${year}-04-21`, "Tiradentes"],
-    [`${year}-05-01`, "Dia do Trabalho"],
-    [iso(addDays(easter, 60)), "Corpus Christi"],
-    [`${year}-09-07`, "Independência do Brasil"],
-    [`${year}-10-12`, "Nossa Senhora Aparecida"],
-    [`${year}-11-02`, "Finados"],
-    [`${year}-11-15`, "Proclamação da República"],
-    [`${year}-11-20`, "Dia da Consciência Negra"],
-    [`${year}-12-25`, "Natal"],
+    [`${year}-01-01`, "newYear"],
+    [iso(addDays(easter, -48)), "carnival"],
+    [iso(addDays(easter, -47)), "carnival"],
+    [iso(addDays(easter, -2)), "goodFriday"],
+    [`${year}-04-21`, "tiradentes"],
+    [`${year}-05-01`, "labourDay"],
+    [iso(addDays(easter, 60)), "corpusChristi"],
+    [`${year}-09-07`, "independence"],
+    [`${year}-10-12`, "aparecida"],
+    [`${year}-11-02`, "allSouls"],
+    [`${year}-11-15`, "republic"],
+    [`${year}-11-20`, "blackAwareness"],
+    [`${year}-12-25`, "christmas"],
   ];
   return new Map(entries);
 }
 
-// Holidays covering an inclusive "YYYY-MM-DD" date range.
+// Holiday keys covering an inclusive "YYYY-MM-DD" date range.
 export function holidaysInRange(
   startDay: string,
   endDay: string

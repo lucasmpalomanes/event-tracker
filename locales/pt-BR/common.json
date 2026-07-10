@@ -1,0 +1,38 @@
+{
+  "appName": "Gagasco",
+  "metaTitle": "Gagasco Organizer",
+  "metaDescription": "Sarajevo aqui vamos nós",
+  "logIn": "Entrar",
+  "logOut": "Sair",
+  "admin": "(admin)",
+  "save": "Salvar",
+  "cancel": "Cancelar",
+  "language": "Idioma",
+  "backToEvents": "Voltar aos eventos",
+  "status": {
+    "open": "Votação aberta",
+    "closed": "Votação encerrada",
+    "finalized": "Finalizado",
+    "finalizedOn": "Finalizado: {{date}}"
+  },
+  "holidays": {
+    "newYear": "Confraternização Universal",
+    "carnival": "Carnaval",
+    "goodFriday": "Sexta-feira Santa",
+    "tiradentes": "Tiradentes",
+    "labourDay": "Dia do Trabalho",
+    "corpusChristi": "Corpus Christi",
+    "independence": "Independência do Brasil",
+    "aparecida": "Nossa Senhora Aparecida",
+    "allSouls": "Finados",
+    "republic": "Proclamação da República",
+    "blackAwareness": "Dia da Consciência Negra",
+    "christmas": "Natal"
+  },
+  "errors": {
+    "notLoggedIn": "Você não está logado",
+    "adminsOnly": "Apenas administradores",
+    "eventNotFound": "Evento não encontrado",
+    "noAccess": "Você não tem acesso a este evento"
+  }
+}
