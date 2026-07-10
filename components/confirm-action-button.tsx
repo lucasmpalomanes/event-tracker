@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,6 +55,7 @@ export function ConfirmActionButton({
   "aria-label"?: string;
   children: ReactNode;
 }) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -92,7 +94,7 @@ export function ConfirmActionButton({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
           <AlertDialogAction variant={confirmVariant} onClick={handleConfirm}>
             {confirmLabel}
           </AlertDialogAction>

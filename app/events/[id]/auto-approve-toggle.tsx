@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import { setAutoApprove } from "@/app/actions";
 import {
   AlertDialog,
@@ -29,6 +30,8 @@ export function AutoApproveToggle({
   enabled: boolean;
   pendingCount: number;
 }) {
+  const { t } = useTranslation("event");
+  const { t: tCommon } = useTranslation("common");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -66,31 +69,28 @@ export function AutoApproveToggle({
             />
           }
         >
-          Auto-approve
+          {t("autoApprove.label")}
         </TooltipTrigger>
-        <TooltipContent>
-          When on, anyone who asks to enter gets access immediately
-        </TooltipContent>
+        <TooltipContent>{t("autoApprove.tooltip")}</TooltipContent>
       </Tooltip>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Turn on auto-approve?</AlertDialogTitle>
+            <AlertDialogTitle>{t("autoApprove.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Turning on auto-approve will also approve the {pendingCount}{" "}
-              pending request{pendingCount > 1 ? "s" : ""} right now. Continue?
+              {t("autoApprove.description", { count: pendingCount })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 setConfirmOpen(false);
                 apply(true);
               }}
             >
-              Turn on
+              {t("autoApprove.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,0 +1,14 @@
+{
+  "heroLead": "Escolha a melhor data para o próximo encontro. Entre para ver os eventos e votar nos dias em que você está disponível.",
+  "events": "Eventos",
+  "createEvent": "Criar evento",
+  "noEvents": "Nenhum evento ainda.",
+  "createFirst": "Crie o primeiro!",
+  "pendingBadge_one": "{{count}} pedido pendente",
+  "pendingBadge_other": "{{count}} pedidos pendentes",
+  "happeningOn": "Acontece em {{date}}",
+  "join": "Participar",
+  "requestToEnter": "Pedir para entrar",
+  "awaitingApproval": "Aguardando aprovação",
+  "requestAgain": "Pedir novamente"
+}

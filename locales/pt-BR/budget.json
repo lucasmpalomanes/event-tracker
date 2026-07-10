@@ -1,0 +1,78 @@
+{
+  "charging": "Cobrança",
+  "finalizeFirst": "Finalize a data primeiro — cobranças só podem ser ativadas com o evento finalizado.",
+  "payments": "Pagamentos",
+  "syncStatuses": "Sincronizar status",
+  "deactivate": {
+    "label": "Desativar",
+    "title": "Desativar cobrança?",
+    "description": "Toda cobrança não paga é cancelada — os códigos Pix param de funcionar. Cobranças pagas são mantidas; reembolsos continuam manuais. Reativar depois cria novas cobranças para quem ainda não pagou."
+  },
+  "drift": "O orçamento mudou desde a ativação — desative e reative a cobrança para reprecificar.",
+  "items": "Itens do orçamento",
+  "total": "Total: {{amount}}",
+  "empty": "O organizador ainda não montou o orçamento.",
+  "exemption": {
+    "none": "Todos",
+    "alcohol": "Quem bebe",
+    "meat": "Quem come carne"
+  },
+  "groupSize_one": "{{count}} pessoa",
+  "groupSize_other": "{{count}} pessoas",
+  "costSplit": "Divisão de custos",
+  "headcount_one": "{{count}} participante",
+  "headcount_other": "{{count}} participantes",
+  "drinkers_one": "{{count}} bebe",
+  "drinkers_other": "{{count}} bebem",
+  "meatEaters_one": "{{count}} come carne",
+  "meatEaters_other": "{{count}} comem carne",
+  "unsplitAlcohol": "Há custos de bebida mas ninguém que beba para dividi-los — reclassifique ou remova esses itens.",
+  "unsplitMeat": "Há custos de carne mas ninguém que coma carne para dividi-los — reclassifique ou remova esses itens.",
+  "fullPrice": "Preço cheio",
+  "noAlcoholPrice": "Sem álcool",
+  "noMeatPrice": "Sem carne",
+  "noAlcoholNoMeatPrice": "Sem álcool + sem carne",
+  "yourShare": "Sua parte",
+  "noItemsShare": "Nenhum item ainda — sua parte aparece quando o orçamento tiver custos.",
+  "breakdown": {
+    "noAlcohol": "− {{amount}} (não bebe)",
+    "noMeat": "− {{amount}} (não come carne)"
+  },
+  "flags": {
+    "noAlcohol": "Não bebo álcool",
+    "noMeat": "Não como carne",
+    "hint": "Isso afeta quanto você vai pagar.",
+    "locked": "A cobrança está ativa — peça ao organizador para alterar suas preferências."
+  },
+  "editor": {
+    "itemName": "Nome do item",
+    "amount": "Valor (R$)",
+    "newItemName": "Nome do novo item",
+    "newItemAmount": "Valor do novo item (R$)",
+    "itemPlaceholder": "Item (picanha, carvão…)",
+    "amountPlaceholder": "R$",
+    "save": "Salvar",
+    "saving": "Salvando…",
+    "add": "Adicionar item",
+    "adding": "Adicionando…",
+    "remove": "Remover {{name}}"
+  },
+  "activation": {
+    "basePrice": "Preço base (R$)",
+    "noAlcoholDeduction": "− sem álcool",
+    "noMeatDeduction": "− sem carne",
+    "minimumWarning": "O preço base menos as duas deduções deve ficar acima de zero — adicione um item que todos dividem, ou trate os isentos manualmente.",
+    "cta": "Ativar cobrança",
+    "pending": "Ativando…",
+    "title": "Ativar cobrança?",
+    "description_one": "Isso cria uma cobrança Pix para o {{count}} participante aprovado. Os preços ficam congelados — para alterá-los depois é preciso desativar e reativar.",
+    "description_other": "Isso cria uma cobrança Pix para cada um dos {{count}} participantes aprovados. Os preços ficam congelados — para alterá-los depois é preciso desativar e reativar.",
+    "confirm": "Ativar",
+    "failed": "Falha na ativação"
+  },
+  "errors": {
+    "nameRequired": "O nome do item é obrigatório",
+    "amountPositive": "O valor do item deve ser positivo",
+    "invalidExemption": "Grupo de isenção inválido"
+  }
+}

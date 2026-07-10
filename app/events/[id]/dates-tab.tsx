@@ -1,6 +1,8 @@
 import type { AvailabilityEntry, EventRow, Participant, PendingRequest } from "@/lib/events";
 import { holidaysInRange } from "@/lib/holidays";
-import { formatDay } from "@/lib/utils";
+import { formatDay, formatMonthYear } from "@/lib/format";
+import { getT } from "@/lib/i18n/server";
+import type { Locale } from "@/lib/i18n/config";
 import {
   clearUserVotes,
   closeVoting,
@@ -22,28 +24,16 @@ import { Card } from "@/components/ui/card";
 
 // Build one grid per calendar month covered by the window. Days outside
 // the window are rendered but non-interactive (specs/spec.md §5.2).
+// `holidays` maps day -> translated display name.
 function buildMonths(
   windowStart: string,
   windowEnd: string,
   holidays: Map<string, string>,
   counts: Map<string, number>,
   mine: Set<string>,
+  locale: Locale,
 ): CalendarMonth[] {
   const months: CalendarMonth[] = [];
-  const MONTH_NAMES = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
 
   let year = Number(windowStart.slice(0, 4));
   let month = Number(windowStart.slice(5, 7)); // 1-based
@@ -71,7 +61,7 @@ function buildMonths(
       });
     }
     months.push({
-      label: `${MONTH_NAMES[month - 1]} ${year}`,
+      label: formatMonthYear(year, month, locale),
       leadingBlanks: firstWeekday,
       cells,
     });
@@ -87,7 +77,7 @@ function buildMonths(
 // The Dates tab: availability calendar, admin voting controls, ranking
 // panel, and participant management (specs/spec.md §5.2, tab structure per
 // specs/event-budget.md §6.1).
-export function DatesTab({
+export async function DatesTab({
   event,
   viewerId,
   isAdmin,
@@ -102,7 +92,15 @@ export function DatesTab({
   participants: Participant[];
   availability: AvailabilityEntry[];
 }) {
-  const holidays = holidaysInRange(event.window_start, event.window_end);
+  const { t, locale } = await getT("event");
+  const { t: tCommon } = await getT("common");
+
+  // Holiday keys -> display names in the active locale (specs/i18n.md §3).
+  const holidays = new Map(
+    [...holidaysInRange(event.window_start, event.window_end)].map(
+      ([day, key]) => [day, tCommon(`holidays.${key}`)] as const,
+    ),
+  );
 
   const counts = new Map<string, number>();
   const voters = new Map<string, { userId: string; name: string }[]>();
@@ -124,6 +122,7 @@ export function DatesTab({
     holidays,
     counts,
     mine,
+    locale,
   );
 
   const ranking = [...counts.entries()]
@@ -140,7 +139,7 @@ export function DatesTab({
       {isAdmin && pendingRequests.length > 0 && (
         <Card className="gap-3 bg-warning/40 p-4 ring-warning-foreground/20">
           <h2 className="font-medium text-warning-foreground">
-            Pending access requests
+            {t("pendingRequests")}
           </h2>
           <ul className="flex flex-col gap-2">
             {pendingRequests.map((req) => (
@@ -148,12 +147,12 @@ export function DatesTab({
                 <span className="flex-1">{req.user.name ?? req.user.email}</span>
                 <form action={decideMembership.bind(null, req.id, "approved")}>
                   <Button type="submit" size="xs">
-                    Approve
+                    {t("approve")}
                   </Button>
                 </form>
                 <form action={decideMembership.bind(null, req.id, "rejected")}>
                   <Button type="submit" size="xs" variant="outline">
-                    Reject
+                    {t("reject")}
                   </Button>
                 </form>
               </li>
@@ -166,9 +165,7 @@ export function DatesTab({
         <section className="flex-1">
           <div className="mb-3 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="font-medium min-w-40">
-              {votingOpen
-                ? "Click the days you're available"
-                : "Availability (voting closed)"}
+              {votingOpen ? t("calendarOpen") : t("calendarClosed")}
             </h2>
             {isAdmin && (
               <div className="flex items-center gap-2">
@@ -182,31 +179,35 @@ export function DatesTab({
                   // (specs/spec.md §5.2, specs/shadcn-refactor.md §5.3).
                   <ConfirmActionButton
                     action={closeVoting.bind(null, event.id)}
-                    title="Close voting?"
-                    description={`Close voting for "${event.title}"? Participants can no longer change their availability. You can reopen voting later.`}
-                    confirmLabel="Close voting"
+                    title={t("closeVoting.title")}
+                    description={t("closeVoting.description", {
+                      title: event.title,
+                    })}
+                    confirmLabel={t("closeVoting.label")}
                     confirmVariant="default"
-                    pendingLabel="Closing…"
+                    pendingLabel={t("closeVoting.pending")}
                   >
-                    Close voting
+                    {t("closeVoting.label")}
                   </ConfirmActionButton>
                 )}
                 {event.status === "closed" && (
                   <form action={reopenVoting.bind(null, event.id)}>
                     <Button type="submit" size="xs" variant="outline">
-                      Reopen voting
+                      {t("reopenVoting")}
                     </Button>
                   </form>
                 )}
                 <ConfirmActionButton
                   action={deleteEvent.bind(null, event.id)}
-                  title="Delete event?"
-                  description={`Delete "${event.title}"? This removes all access requests and votes too. This cannot be undone.`}
-                  confirmLabel="Delete event"
+                  title={t("deleteEvent.title")}
+                  description={t("deleteEvent.description", {
+                    title: event.title,
+                  })}
+                  confirmLabel={t("deleteEvent.label")}
                   variant="destructive"
-                  pendingLabel="Deleting…"
+                  pendingLabel={t("deleteEvent.pending")}
                 >
-                  Delete event
+                  {t("deleteEvent.label")}
                 </ConfirmActionButton>
               </div>
             )}
@@ -219,23 +220,23 @@ export function DatesTab({
           <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <span className="inline-block h-3 w-3 rounded bg-holiday" />
-              Holiday
+              {t("legend.holiday")}
             </span>
             <span className="flex items-center gap-1">
               <span className="inline-block h-3 w-3 rounded bg-weekend" />
-              Weekend
+              {t("legend.weekend")}
             </span>
             <span className="flex items-center gap-1">
               <span className="inline-block h-3 w-3 rounded border-2 border-available" />
-              You&apos;re available
+              {t("legend.available")}
             </span>
           </div>
         </section>
 
         <aside className="flex w-full flex-col gap-3 lg:w-72">
-          <h2 className="font-medium">Most voted days</h2>
+          <h2 className="font-medium">{t("mostVoted")}</h2>
           {ranking.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No votes yet.</p>
+            <p className="text-sm text-muted-foreground">{t("noVotes")}</p>
           ) : (
             <ol className="flex flex-col gap-2">
               {ranking.map(([day, count]) => (
@@ -243,7 +244,7 @@ export function DatesTab({
                   <Card className="flex-row items-center gap-2 p-3 text-sm">
                     <div className="flex flex-1 flex-col">
                       <span>
-                        {formatDay(day)}
+                        {formatDay(day, locale)}
                         {holidays.has(day) && (
                           <span className="ml-1 text-xs text-holiday-foreground">
                             ({holidays.get(day)})
@@ -267,14 +268,23 @@ export function DatesTab({
                                     voter.userId,
                                     day,
                                   )}
-                                  title="Remove vote?"
-                                  description={`Remove ${voter.name}'s vote on ${formatDay(day)}? This cannot be undone.`}
-                                  confirmLabel="Remove vote"
+                                  title={t("removeVote.title")}
+                                  description={t("removeVote.description", {
+                                    name: voter.name,
+                                    date: formatDay(day, locale),
+                                  })}
+                                  confirmLabel={t("removeVote.label")}
                                   variant="ghost"
                                   size="icon-xs"
                                   className="text-muted-foreground hover:text-destructive"
-                                  tooltip={`Remove ${voter.name}'s vote on ${formatDay(day)}`}
-                                  aria-label={`Remove ${voter.name}'s vote on ${formatDay(day)}`}
+                                  tooltip={t("removeVote.tooltip", {
+                                    name: voter.name,
+                                    date: formatDay(day, locale),
+                                  })}
+                                  aria-label={t("removeVote.tooltip", {
+                                    name: voter.name,
+                                    date: formatDay(day, locale),
+                                  })}
                                 >
                                   ×
                                 </ConfirmActionButton>
@@ -292,13 +302,16 @@ export function DatesTab({
                       // confirms first (specs/shadcn-refactor.md §5.3).
                       <ConfirmActionButton
                         action={finalizeEvent.bind(null, event.id, day)}
-                        title="Finalize this date?"
-                        description={`Finalize ${formatDay(day)} for "${event.title}"? Voting ends and the event cannot be reopened. This cannot be undone.`}
-                        confirmLabel="Finalize"
+                        title={t("finalize.title")}
+                        description={t("finalize.description", {
+                          date: formatDay(day, locale),
+                          title: event.title,
+                        })}
+                        confirmLabel={t("finalize.confirm")}
                         confirmVariant="default"
-                        tooltip="Finalize this date"
+                        tooltip={t("finalize.tooltip")}
                       >
-                        Pick
+                        {t("finalize.pick")}
                       </ConfirmActionButton>
                     )}
                   </Card>
@@ -311,7 +324,7 @@ export function DatesTab({
 
       {isAdmin && (
         <Card className="gap-3 p-4">
-          <h2 className="font-medium">Participants</h2>
+          <h2 className="font-medium">{t("participants")}</h2>
           <ul className="flex flex-col gap-2">
             {participants.map((p) => {
               const displayName = p.name ?? p.email;
@@ -325,24 +338,27 @@ export function DatesTab({
                     {displayName}
                     {p.isCreator && (
                       <span className="ml-1 text-xs text-muted-foreground">
-                        (creator)
+                        {t("creator")}
                       </span>
                     )}
                   </span>
                   <span className="flex-1 text-xs text-muted-foreground">
-                    {voteCount} {voteCount === 1 ? "vote" : "votes"}
+                    {t("votes", { count: voteCount })}
                   </span>
                   {canRemove && (
                     <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
                       <ConfirmActionButton
                         action={clearUserVotes.bind(null, event.id, p.userId)}
-                        title="Clear votes?"
-                        description={`Clear all ${voteCount} of ${displayName}'s votes for this event? They stay in the event and can vote again. This cannot be undone.`}
-                        confirmLabel="Clear votes"
+                        title={t("clearVotes.title")}
+                        description={t("clearVotes.description", {
+                          count: voteCount,
+                          name: displayName,
+                        })}
+                        confirmLabel={t("clearVotes.label")}
                         disabled={voteCount === 0}
-                        pendingLabel="Clearing…"
+                        pendingLabel={t("clearVotes.pending")}
                       >
-                        Clear votes
+                        {t("clearVotes.label")}
                       </ConfirmActionButton>
                       {!p.isCreator && p.membershipId && (
                         <ConfirmActionButton
@@ -351,13 +367,15 @@ export function DatesTab({
                             event.id,
                             p.membershipId,
                           )}
-                          title="Remove participant?"
-                          description={`Remove ${displayName} from this event? All of their votes are deleted too. They can request to enter again later. This cannot be undone.`}
-                          confirmLabel="Remove"
+                          title={t("removeParticipant.title")}
+                          description={t("removeParticipant.description", {
+                            name: displayName,
+                          })}
+                          confirmLabel={t("removeParticipant.label")}
                           variant="destructive"
-                          pendingLabel="Removing…"
+                          pendingLabel={t("removeParticipant.pending")}
                         >
-                          Remove
+                          {t("removeParticipant.label")}
                         </ConfirmActionButton>
                       )}
                     </div>

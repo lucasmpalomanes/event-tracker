@@ -1,0 +1,73 @@
+{
+  "charging": "收款",
+  "finalizeFirst": "请先确定日期 — 只有日期已确定的活动才能开启收款。",
+  "payments": "付款",
+  "syncStatuses": "同步状态",
+  "deactivate": {
+    "label": "停用",
+    "title": "停用收款？",
+    "description": "所有未支付的收款将被取消 — Pix 码将失效。已支付的收款会保留；退款仍需手动处理。之后重新开启会为尚未付款的人创建新的收款。"
+  },
+  "drift": "预算在开启收款后发生了变化 — 请停用并重新开启收款以重新定价。",
+  "items": "预算项目",
+  "total": "合计：{{amount}}",
+  "empty": "组织者还没有制定预算。",
+  "exemption": {
+    "none": "所有人",
+    "alcohol": "喝酒的人",
+    "meat": "吃肉的人"
+  },
+  "groupSize_other": "{{count}} 人",
+  "costSplit": "费用分摊",
+  "headcount_other": "{{count}} 位参与者",
+  "drinkers_other": "{{count}} 人喝酒",
+  "meatEaters_other": "{{count}} 人吃肉",
+  "unsplitAlcohol": "存在酒水费用，但没有喝酒的人来分摊 — 请重新归类或删除这些项目。",
+  "unsplitMeat": "存在肉类费用，但没有吃肉的人来分摊 — 请重新归类或删除这些项目。",
+  "fullPrice": "全价",
+  "noAlcoholPrice": "不喝酒",
+  "noMeatPrice": "不吃肉",
+  "noAlcoholNoMeatPrice": "不喝酒 + 不吃肉",
+  "yourShare": "您的份额",
+  "noItemsShare": "还没有项目 — 预算有费用后会显示您的份额。",
+  "breakdown": {
+    "noAlcohol": "− {{amount}}（不喝酒）",
+    "noMeat": "− {{amount}}（不吃肉）"
+  },
+  "flags": {
+    "noAlcohol": "我不喝酒",
+    "noMeat": "我不吃肉",
+    "hint": "这会影响您需要支付的金额。",
+    "locked": "收款已开启 — 请联系管理员修改您的偏好。"
+  },
+  "editor": {
+    "itemName": "项目名称",
+    "amount": "金额（R$）",
+    "newItemName": "新项目名称",
+    "newItemAmount": "新项目金额（R$）",
+    "itemPlaceholder": "项目（烤肉、木炭…）",
+    "amountPlaceholder": "R$",
+    "save": "保存",
+    "saving": "正在保存…",
+    "add": "添加项目",
+    "adding": "正在添加…",
+    "remove": "删除 {{name}}"
+  },
+  "activation": {
+    "basePrice": "基础价格（R$）",
+    "noAlcoholDeduction": "− 不喝酒",
+    "noMeatDeduction": "− 不吃肉",
+    "minimumWarning": "基础价格减去两项扣减后必须大于零 — 请添加一个所有人分摊的项目，或手动处理免摊的参与者。",
+    "cta": "开启收款",
+    "pending": "正在开启…",
+    "title": "开启收款？",
+    "description_other": "这会为 {{count}} 位已批准的参与者各创建一笔 Pix 收款。价格将被冻结 — 之后修改价格需要停用并重新开启。",
+    "confirm": "开启",
+    "failed": "开启失败"
+  },
+  "errors": {
+    "nameRequired": "项目名称为必填项",
+    "amountPositive": "项目金额必须为正数",
+    "invalidExemption": "免摊组无效"
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "createEvent": "创建活动",
+  "form": {
+    "title": "标题",
+    "description": "描述（可选）",
+    "descriptionPlain": "描述",
+    "location": "地点（可选）",
+    "locationPlain": "地点",
+    "firstDay": "第一个候选日",
+    "lastDay": "最后一个候选日",
+    "windowCap": "日期范围最长为 6 个月。",
+    "autoApprove": "自动批准新成员",
+    "autoApproveHint": "任何申请加入的人都会立即获得访问权限，无需等待您的批准。您以后可以更改此设置。"
+  },
+  "editDetails": "编辑详情",
+  "tabs": {
+    "dates": "日期",
+    "budget": "预算"
+  },
+  "pendingRequests": "待处理的访问申请",
+  "approve": "批准",
+  "reject": "拒绝",
+  "calendarOpen": "点击您有空的日子",
+  "calendarClosed": "空闲情况（投票已结束）",
+  "autoApprove": {
+    "label": "自动批准",
+    "tooltip": "开启后，任何申请加入的人都会立即获得访问权限",
+    "title": "开启自动批准？",
+    "description_other": "开启自动批准会立即批准当前的 {{count}} 个待处理申请。继续吗？",
+    "confirm": "开启"
+  },
+  "closeVoting": {
+    "label": "结束投票",
+    "title": "结束投票？",
+    "description": "结束「{{title}}」的投票？参与者将无法再更改空闲日期。您以后可以重新开放投票。",
+    "pending": "正在结束…"
+  },
+  "reopenVoting": "重新开放投票",
+  "deleteEvent": {
+    "label": "删除活动",
+    "title": "删除活动？",
+    "description": "删除「{{title}}」？所有访问申请和投票也会一并删除。此操作无法撤销。",
+    "pending": "正在删除…"
+  },
+  "legend": {
+    "holiday": "节假日",
+    "weekend": "周末",
+    "available": "您有空"
+  },
+  "mostVoted": "得票最多的日子",
+  "noVotes": "还没有投票。",
+  "votes_other": "{{count}} 票",
+  "removeVote": {
+    "label": "移除投票",
+    "title": "移除投票？",
+    "description": "移除 {{name}} 在 {{date}} 的投票？此操作无法撤销。",
+    "tooltip": "移除 {{name}} 在 {{date}} 的投票"
+  },
+  "finalize": {
+    "pick": "选定",
+    "title": "确定这个日期？",
+    "description": "将「{{title}}」的日期确定为 {{date}}？投票将结束，活动无法重新开放。此操作无法撤销。",
+    "confirm": "确定",
+    "tooltip": "确定这个日期"
+  },
+  "participants": "参与者",
+  "creator": "（创建者）",
+  "clearVotes": {
+    "label": "清除投票",
+    "title": "清除投票？",
+    "description": "清除 {{name}} 在此活动的全部 {{count}} 张投票？此人仍留在活动中，可以重新投票。此操作无法撤销。",
+    "pending": "正在清除…"
+  },
+  "removeParticipant": {
+    "label": "移除",
+    "title": "移除参与者？",
+    "description": "将 {{name}} 从此活动中移除？其所有投票也会被删除。此人以后可以再次申请加入。此操作无法撤销。",
+    "pending": "正在移除…"
+  },
+  "errors": {
+    "titleRequired": "标题为必填项",
+    "windowRequired": "两个日期范围均为必填项",
+    "windowOrder": "结束日期不能早于开始日期",
+    "windowCap": "日期范围最长为 6 个月",
+    "invalidDay": "日期无效",
+    "votingClosed": "投票已结束",
+    "outsideWindow": "该日期不在活动日期范围内",
+    "alreadyFinalized": "日期已确定",
+    "finalizedOutsideWindow": "确定的日期必须在活动日期范围内",
+    "participantNotFound": "未找到参与者",
+    "creatorNotRemovable": "无法移除活动创建者"
+  }
+}

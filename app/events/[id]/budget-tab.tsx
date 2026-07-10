@@ -10,6 +10,7 @@ import {
   reconcileChargeWithPsp,
   type PixChargeWithUser,
 } from "@/lib/charges";
+import { getT } from "@/lib/i18n/server";
 import { deactivateCharging, syncChargeStatuses } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,12 +24,6 @@ import {
 import { FlagsEditor } from "./flags-editor";
 import { PaymentBoard } from "./payment-board";
 import { PaymentCard } from "./payment-card";
-
-const EXEMPTION_LABELS: Record<BudgetItem["exemption"], string> = {
-  none: "Everyone",
-  alcohol: "Drinkers",
-  meat: "Meat-eaters",
-};
 
 // The Budget tab (specs/event-budget.md §6): itemized costs, live per-person
 // shares, the viewer's own flags + share, and — the money story — the Pix
@@ -50,6 +45,8 @@ export async function BudgetTab({
   chargeSettings: ChargeSettings | null;
   charges: PixChargeWithUser[];
 }) {
+  const { t } = await getT("budget");
+
   const shares = computeShares(
     items,
     participants.map((p) => ({ no_alcohol: p.noAlcohol, no_meat: p.noMeat })),
@@ -79,10 +76,10 @@ export async function BudgetTab({
   // "R$ 60 − R$ 15 (não bebe) = R$ 45" (specs/event-budget.md §6.2).
   const deductions = [
     viewerFlags.no_alcohol && shares.alcoholShare > 0
-      ? `− ${formatBRL(shares.alcoholShare)} (não bebe)`
+      ? t("breakdown.noAlcohol", { amount: formatBRL(shares.alcoholShare) })
       : null,
     viewerFlags.no_meat && shares.meatShare > 0
-      ? `− ${formatBRL(shares.meatShare)} (não come carne)`
+      ? t("breakdown.noMeat", { amount: formatBRL(shares.meatShare) })
       : null,
   ].filter(Boolean);
 
@@ -126,7 +123,7 @@ export async function BudgetTab({
 
       {isAdmin && !chargeSettings && (
         <Card className="gap-3 p-4">
-          <h2 className="font-medium">Charging</h2>
+          <h2 className="font-medium">{t("charging")}</h2>
           {event.status === "finalized" ? (
             <ActivateChargingForm
               eventId={event.id}
@@ -141,8 +138,7 @@ export async function BudgetTab({
             />
           ) : (
             <p className="text-sm text-muted-foreground">
-              Finalize a data primeiro — cobranças só podem ser ativadas com o
-              evento finalizado.
+              {t("finalizeFirst")}
             </p>
           )}
         </Card>
@@ -151,28 +147,25 @@ export async function BudgetTab({
       {isAdmin && chargeSettings && (
         <Card className="gap-3 p-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="font-medium">Payments</h2>
+            <h2 className="font-medium">{t("payments")}</h2>
             <div className="flex items-center gap-2">
               <form action={syncChargeStatuses.bind(null, event.id)}>
                 <Button type="submit" size="xs" variant="outline">
-                  Sync statuses
+                  {t("syncStatuses")}
                 </Button>
               </form>
               <ConfirmActionButton
                 action={deactivateCharging.bind(null, event.id)}
-                title="Deactivate charging?"
-                description="Every unpaid charge is canceled — the Pix codes stop working. Paid charges are kept; refunds stay manual. Reactivating later creates fresh charges for anyone who hasn't paid."
-                confirmLabel="Deactivate"
+                title={t("deactivate.title")}
+                description={t("deactivate.description")}
+                confirmLabel={t("deactivate.label")}
               >
-                Deactivate
+                {t("deactivate.label")}
               </ConfirmActionButton>
             </div>
           </div>
           {drift && (
-            <p className="text-sm text-warning-foreground">
-              O orçamento mudou desde a ativação — desative e reative a
-              cobrança para reprecificar.
-            </p>
+            <p className="text-sm text-warning-foreground">{t("drift")}</p>
           )}
           <PaymentBoard
             eventId={event.id}
@@ -184,19 +177,17 @@ export async function BudgetTab({
 
       <Card className="gap-3 p-4">
         <div className="flex items-baseline justify-between">
-          <h2 className="font-medium">Budget items</h2>
+          <h2 className="font-medium">{t("items")}</h2>
           {items.length > 0 && (
             <span className="text-sm text-muted-foreground">
-              Total: {formatBRL(shares.totalCents)}
+              {t("total", { amount: formatBRL(shares.totalCents) })}
             </span>
           )}
         </div>
         {isAdmin ? (
           <BudgetItemsEditor eventId={event.id} items={editableItems} />
         ) : items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            O organizador ainda não montou o orçamento.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("empty")}</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {items.map((item) => (
@@ -206,9 +197,8 @@ export async function BudgetTab({
               >
                 <span className="flex-1">{item.name}</span>
                 <span className="text-xs text-muted-foreground">
-                  {EXEMPTION_LABELS[item.exemption]} ·{" "}
-                  {groupSize[item.exemption]}{" "}
-                  {groupSize[item.exemption] === 1 ? "person" : "people"}
+                  {t(`exemption.${item.exemption}`)} ·{" "}
+                  {t("groupSize", { count: groupSize[item.exemption] })}
                 </span>
                 <span className="w-20 text-right font-medium">
                   {formatBRL(item.amount_cents)}
@@ -221,45 +211,41 @@ export async function BudgetTab({
 
       {items.length > 0 && (
         <Card className="gap-3 p-4">
-          <h2 className="font-medium">Cost split</h2>
+          <h2 className="font-medium">{t("costSplit")}</h2>
           <p className="text-sm text-muted-foreground">
-            {shares.headcount}{" "}
-            {shares.headcount === 1 ? "participant" : "participants"} ·{" "}
-            {shares.drinkers} {shares.drinkers === 1 ? "drinker" : "drinkers"} ·{" "}
-            {shares.meatEaters}{" "}
-            {shares.meatEaters === 1 ? "meat-eater" : "meat-eaters"}
+            {t("headcount", { count: shares.headcount })} ·{" "}
+            {t("drinkers", { count: shares.drinkers })} ·{" "}
+            {t("meatEaters", { count: shares.meatEaters })}
           </p>
           {shares.unsplitAlcohol && (
             <p className="text-sm text-warning-foreground">
-              There are drink costs but no drinkers to split them — retag or
-              remove those items.
+              {t("unsplitAlcohol")}
             </p>
           )}
           {shares.unsplitMeat && (
             <p className="text-sm text-warning-foreground">
-              There are meat costs but no meat-eaters to split them — retag or
-              remove those items.
+              {t("unsplitMeat")}
             </p>
           )}
           <ul className="flex flex-col gap-1 text-sm">
             <li className="flex justify-between">
-              <span>Full price</span>
+              <span>{t("fullPrice")}</span>
               <span className="font-medium">{formatBRL(fullPrice)}</span>
             </li>
             <li className="flex justify-between">
-              <span>No alcohol</span>
+              <span>{t("noAlcoholPrice")}</span>
               <span className="font-medium">
                 {formatBRL(fullPrice - shares.alcoholShare)}
               </span>
             </li>
             <li className="flex justify-between">
-              <span>No meat</span>
+              <span>{t("noMeatPrice")}</span>
               <span className="font-medium">
                 {formatBRL(fullPrice - shares.meatShare)}
               </span>
             </li>
             <li className="flex justify-between">
-              <span>No alcohol + no meat</span>
+              <span>{t("noAlcoholNoMeatPrice")}</span>
               <span className="font-medium">{formatBRL(shares.generalShare)}</span>
             </li>
           </ul>
@@ -267,7 +253,7 @@ export async function BudgetTab({
       )}
 
       <Card className="gap-3 p-4">
-        <h2 className="font-medium">Your share</h2>
+        <h2 className="font-medium">{t("yourShare")}</h2>
         {items.length > 0 ? (
           <p className="text-lg font-semibold">
             {deductions.length > 0 ? (
@@ -282,9 +268,7 @@ export async function BudgetTab({
             )}
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            No items yet — your share shows up once the budget has costs.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("noItemsShare")}</p>
         )}
         <Separator />
         <FlagsEditor

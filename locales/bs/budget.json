@@ -1,0 +1,83 @@
+{
+  "charging": "Naplata",
+  "finalizeFirst": "Prvo finalizirajte datum — naplata se može aktivirati samo za finalizirani događaj.",
+  "payments": "Plaćanja",
+  "syncStatuses": "Sinhronizuj statuse",
+  "deactivate": {
+    "label": "Deaktiviraj",
+    "title": "Deaktivirati naplatu?",
+    "description": "Sve neplaćene naplate se otkazuju — Pix kodovi prestaju raditi. Plaćene naplate se čuvaju; povrati ostaju ručni. Kasnija reaktivacija kreira nove naplate za sve koji nisu platili."
+  },
+  "drift": "Budžet se promijenio od aktivacije — deaktivirajte i ponovo aktivirajte naplatu za novu cijenu.",
+  "items": "Stavke budžeta",
+  "total": "Ukupno: {{amount}}",
+  "empty": "Organizator još nije napravio budžet.",
+  "exemption": {
+    "none": "Svi",
+    "alcohol": "Oni koji piju",
+    "meat": "Oni koji jedu meso"
+  },
+  "groupSize_one": "{{count}} osoba",
+  "groupSize_few": "{{count}} osobe",
+  "groupSize_other": "{{count}} osoba",
+  "costSplit": "Podjela troškova",
+  "headcount_one": "{{count}} učesnik",
+  "headcount_few": "{{count}} učesnika",
+  "headcount_other": "{{count}} učesnika",
+  "drinkers_one": "{{count}} pije",
+  "drinkers_few": "{{count}} piju",
+  "drinkers_other": "{{count}} pije",
+  "meatEaters_one": "{{count}} jede meso",
+  "meatEaters_few": "{{count}} jedu meso",
+  "meatEaters_other": "{{count}} jede meso",
+  "unsplitAlcohol": "Postoje troškovi pića, ali nema nikoga ko pije da ih podijeli — prekategorizirajte ili uklonite te stavke.",
+  "unsplitMeat": "Postoje troškovi mesa, ali nema nikoga ko jede meso da ih podijeli — prekategorizirajte ili uklonite te stavke.",
+  "fullPrice": "Puna cijena",
+  "noAlcoholPrice": "Bez alkohola",
+  "noMeatPrice": "Bez mesa",
+  "noAlcoholNoMeatPrice": "Bez alkohola + bez mesa",
+  "yourShare": "Vaš dio",
+  "noItemsShare": "Još nema stavki — vaš dio se prikazuje kad budžet dobije troškove.",
+  "breakdown": {
+    "noAlcohol": "− {{amount}} (ne pije)",
+    "noMeat": "− {{amount}} (ne jede meso)"
+  },
+  "flags": {
+    "noAlcohol": "Ne pijem alkohol",
+    "noMeat": "Ne jedem meso",
+    "hint": "Ovo utiče na to koliko ćete platiti.",
+    "locked": "Naplata je aktivna — zamolite administratora da promijeni vaše postavke."
+  },
+  "editor": {
+    "itemName": "Naziv stavke",
+    "amount": "Iznos (R$)",
+    "newItemName": "Naziv nove stavke",
+    "newItemAmount": "Iznos nove stavke (R$)",
+    "itemPlaceholder": "Stavka (pikanja, ugalj…)",
+    "amountPlaceholder": "R$",
+    "save": "Sačuvaj",
+    "saving": "Čuvanje…",
+    "add": "Dodaj stavku",
+    "adding": "Dodavanje…",
+    "remove": "Ukloni {{name}}"
+  },
+  "activation": {
+    "basePrice": "Osnovna cijena (R$)",
+    "noAlcoholDeduction": "− bez alkohola",
+    "noMeatDeduction": "− bez mesa",
+    "minimumWarning": "Osnovna cijena minus oba odbitka mora ostati iznad nule — dodajte stavku koju svi dijele ili ručno riješite izuzete učesnike.",
+    "cta": "Aktiviraj naplatu",
+    "pending": "Aktiviranje…",
+    "title": "Aktivirati naplatu?",
+    "description_one": "Ovo kreira Pix naplatu za {{count}} odobrenog učesnika. Cijene se zamrzavaju — kasnija promjena znači deaktivaciju i ponovnu aktivaciju.",
+    "description_few": "Ovo kreira Pix naplatu za svakog od {{count}} odobrena učesnika. Cijene se zamrzavaju — kasnija promjena znači deaktivaciju i ponovnu aktivaciju.",
+    "description_other": "Ovo kreira Pix naplatu za svakog od {{count}} odobrenih učesnika. Cijene se zamrzavaju — kasnija promjena znači deaktivaciju i ponovnu aktivaciju.",
+    "confirm": "Aktiviraj",
+    "failed": "Aktivacija nije uspjela"
+  },
+  "errors": {
+    "nameRequired": "Naziv stavke je obavezan",
+    "amountPositive": "Iznos stavke mora biti pozitivan",
+    "invalidExemption": "Nevažeća grupa izuzeća"
+  }
+}

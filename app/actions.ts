@@ -23,18 +23,32 @@ import {
 import { getChargeSettings } from "@/lib/budget";
 import { cancelCharge as cancelPspCharge } from "@/lib/pix";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getT } from "@/lib/i18n/server";
+import type { Namespace } from "@/lib/i18n/config";
 
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+// User-facing validation/state errors are thrown in the viewer's language
+// (specs/i18n.md §3). The `Failed to X: ${message}` wrappers around DB/PSP
+// failures stay in English — they're diagnostics, not UI copy.
+async function tError(
+  ns: Namespace,
+  key: string,
+  options?: Record<string, unknown>
+) {
+  const { t } = await getT(ns);
+  return new Error(t(key, options));
+}
+
 async function requireUser() {
   const user = await getCurrentUser();
-  if (!user) throw new Error("Not logged in");
+  if (!user) throw await tError("common", "errors.notLoggedIn");
   return user;
 }
 
 async function requireAdmin() {
   const user = await requireUser();
-  if (!user.is_admin) throw new Error("Admins only");
+  if (!user.is_admin) throw await tError("common", "errors.adminsOnly");
   return user;
 }
 
@@ -49,18 +63,18 @@ export async function createEvent(formData: FormData) {
   const windowStart = String(formData.get("window_start") ?? "");
   const windowEnd = String(formData.get("window_end") ?? "");
 
-  if (!title) throw new Error("Title is required");
+  if (!title) throw await tError("event", "errors.titleRequired");
   if (!DAY_RE.test(windowStart) || !DAY_RE.test(windowEnd)) {
-    throw new Error("Both window dates are required");
+    throw await tError("event", "errors.windowRequired");
   }
   if (windowEnd < windowStart) {
-    throw new Error("Window end must not be before window start");
+    throw await tError("event", "errors.windowOrder");
   }
   // 6-month cap (specs/spec.md §8); the DB constraint is the backstop.
   const cap = new Date(`${windowStart}T00:00:00Z`);
   cap.setUTCMonth(cap.getUTCMonth() + 6);
   if (new Date(`${windowEnd}T00:00:00Z`) > cap) {
-    throw new Error("The date window may span at most 6 months");
+    throw await tError("event", "errors.windowCap");
   }
 
   const supabase = createServerSupabaseClient();
@@ -151,13 +165,15 @@ export async function reopenVoting(eventId: string) {
 
 export async function finalizeEvent(eventId: string, day: string) {
   await requireAdmin();
-  if (!DAY_RE.test(day)) throw new Error("Invalid day");
+  if (!DAY_RE.test(day)) throw await tError("event", "errors.invalidDay");
 
   const event = await getEvent(eventId);
-  if (!event) throw new Error("Event not found");
-  if (event.status === "finalized") throw new Error("Already finalized");
+  if (!event) throw await tError("common", "errors.eventNotFound");
+  if (event.status === "finalized") {
+    throw await tError("event", "errors.alreadyFinalized");
+  }
   if (day < event.window_start || day > event.window_end) {
-    throw new Error("Finalized date must be inside the event window");
+    throw await tError("event", "errors.finalizedOutsideWindow");
   }
 
   const supabase = createServerSupabaseClient();
@@ -179,7 +195,7 @@ export async function finalizeEvent(eventId: string, day: string) {
 export async function requestAccess(eventId: string) {
   const user = await requireUser();
   const event = await getEvent(eventId);
-  if (!event) throw new Error("Event not found");
+  if (!event) throw await tError("common", "errors.eventNotFound");
   const existing = await getMembership(eventId, user.id);
 
   const supabase = createServerSupabaseClient();
@@ -302,7 +318,7 @@ export async function setAutoApprove(eventId: string, enabled: boolean) {
 export async function removeParticipant(eventId: string, membershipId: string) {
   await requireAdmin();
   const event = await getEvent(eventId);
-  if (!event) throw new Error("Event not found");
+  if (!event) throw await tError("common", "errors.eventNotFound");
 
   const supabase = createServerSupabaseClient();
   const { data: membership, error: mError } = await supabase
@@ -313,10 +329,10 @@ export async function removeParticipant(eventId: string, membershipId: string) {
     .maybeSingle();
   if (mError) throw new Error(`Failed to load participant: ${mError.message}`);
   if (!membership || membership.status !== "approved") {
-    throw new Error("Participant not found");
+    throw await tError("event", "errors.participantNotFound");
   }
   if (membership.user_id === event.created_by) {
-    throw new Error("The event's creator cannot be removed");
+    throw await tError("event", "errors.creatorNotRemovable");
   }
 
   // With active charging, removal cancels an unpaid charge; a paid one is
@@ -363,7 +379,7 @@ export async function removeSingleVote(
   day: string
 ) {
   await requireAdmin();
-  if (!DAY_RE.test(day)) throw new Error("Invalid day");
+  if (!DAY_RE.test(day)) throw await tError("event", "errors.invalidDay");
 
   const supabase = createServerSupabaseClient();
   const { error } = await supabase
@@ -381,15 +397,19 @@ export async function removeSingleVote(
 
 const EXEMPTIONS = ["none", "alcohol", "meat"] as const;
 
-function parseBudgetItemInput(name: unknown, amountCents: unknown, exemption: unknown) {
+async function parseBudgetItemInput(
+  name: unknown,
+  amountCents: unknown,
+  exemption: unknown
+) {
   const trimmed = String(name ?? "").trim();
-  if (!trimmed) throw new Error("Item name is required");
+  if (!trimmed) throw await tError("budget", "errors.nameRequired");
   const cents = Number(amountCents);
   if (!Number.isInteger(cents) || cents <= 0) {
-    throw new Error("Item amount must be a positive value");
+    throw await tError("budget", "errors.amountPositive");
   }
   if (!EXEMPTIONS.includes(exemption as (typeof EXEMPTIONS)[number])) {
-    throw new Error("Invalid exemption group");
+    throw await tError("budget", "errors.invalidExemption");
   }
   return { name: trimmed, amount_cents: cents, exemption: exemption as string };
 }
@@ -402,12 +422,15 @@ export async function addBudgetItem(
 ) {
   await requireAdmin();
   const event = await getEvent(eventId);
-  if (!event) throw new Error("Event not found");
+  if (!event) throw await tError("common", "errors.eventNotFound");
 
   const supabase = createServerSupabaseClient();
   const { error } = await supabase
     .from("budget_items")
-    .insert({ event_id: eventId, ...parseBudgetItemInput(name, amountCents, exemption) });
+    .insert({
+      event_id: eventId,
+      ...(await parseBudgetItemInput(name, amountCents, exemption)),
+    });
   if (error) throw new Error(`Failed to add budget item: ${error.message}`);
   revalidatePath(`/events/${eventId}`);
 }
@@ -424,7 +447,7 @@ export async function updateBudgetItem(
   const { error } = await supabase
     .from("budget_items")
     .update({
-      ...parseBudgetItemInput(name, amountCents, exemption),
+      ...(await parseBudgetItemInput(name, amountCents, exemption)),
       updated_at: new Date().toISOString(),
     })
     .eq("id", itemId)
@@ -453,11 +476,11 @@ export async function setConsumptionFlags(
 ) {
   const user = await requireUser();
   const event = await getEvent(eventId);
-  if (!event) throw new Error("Event not found");
+  if (!event) throw await tError("common", "errors.eventNotFound");
 
   const membership = await getMembership(eventId, user.id);
   if (!canEnterEvent(user, event, membership)) {
-    throw new Error("You don't have access to this event");
+    throw await tError("common", "errors.noAccess");
   }
 
   const supabase = createServerSupabaseClient();
@@ -468,7 +491,7 @@ export async function setConsumptionFlags(
     .maybeSingle();
   if (sError) throw new Error(`Failed to check charging: ${sError.message}`);
   if (settings) {
-    throw new Error("Charging is active — ask the admin to change your flags");
+    throw await tError("payment", "errors.flagsLocked");
   }
 
   const values = {
@@ -516,7 +539,7 @@ async function requireEventCharge(
     .eq("event_id", eventId)
     .maybeSingle();
   if (error) throw new Error(`Failed to load charge: ${error.message}`);
-  if (!data) throw new Error("Charge not found");
+  if (!data) throw await tError("payment", "errors.chargeNotFound");
   return data as PixCharge;
 }
 
@@ -532,9 +555,9 @@ export async function activateCharging(
 ) {
   await requireAdmin();
   const event = await getEvent(eventId);
-  if (!event) throw new Error("Event not found");
+  if (!event) throw await tError("common", "errors.eventNotFound");
   if (event.status !== "finalized") {
-    throw new Error("Charging can only be activated on a finalized event");
+    throw await tError("payment", "errors.notFinalized");
   }
 
   const { basePriceCents, noAlcoholDeductionCents, noMeatDeductionCents } =
@@ -547,14 +570,12 @@ export async function activateCharging(
     noAlcoholDeductionCents < 0 ||
     noMeatDeductionCents < 0
   ) {
-    throw new Error("Prices must be positive values");
+    throw await tError("payment", "errors.pricesPositive");
   }
   // A fully-deducted participant must still owe a positive amount
   // (specs/pix-payments.md §4).
   if (basePriceCents - noAlcoholDeductionCents - noMeatDeductionCents <= 0) {
-    throw new Error(
-      "Base price minus both deductions must stay above zero"
-    );
+    throw await tError("payment", "errors.minimumPositive");
   }
 
   const supabase = createServerSupabaseClient();
@@ -624,7 +645,7 @@ export async function markChargePaid(eventId: string, chargeId: string) {
   await requireAdmin();
   const charge = await requireEventCharge(eventId, chargeId);
   if (charge.status !== "pending" && charge.status !== "expired") {
-    throw new Error("Only an unpaid charge can be marked as paid");
+    throw await tError("payment", "errors.onlyUnpaidPaid");
   }
   const supabase = createServerSupabaseClient();
   const { error } = await supabase
@@ -648,7 +669,7 @@ export async function markChargeRefunded(eventId: string, chargeId: string) {
   await requireAdmin();
   const charge = await requireEventCharge(eventId, chargeId);
   if (charge.status !== "paid") {
-    throw new Error("Only a paid charge can be marked as refunded");
+    throw await tError("payment", "errors.onlyPaidRefunded");
   }
   const supabase = createServerSupabaseClient();
   const { error } = await supabase
@@ -671,7 +692,7 @@ export async function cancelParticipantCharge(
   await requireAdmin();
   const charge = await requireEventCharge(eventId, chargeId);
   if (charge.status !== "pending" && charge.status !== "expired") {
-    throw new Error("Only an unpaid charge can be canceled");
+    throw await tError("payment", "errors.onlyUnpaidCanceled");
   }
   await cancelChargeRow(charge);
   revalidatePath(`/events/${eventId}`);
@@ -693,9 +714,9 @@ export async function regenerateParticipantCharge(
 export async function regenerateMyCharge(eventId: string) {
   const user = await requireUser();
   const charge = await getLiveCharge(eventId, user.id);
-  if (!charge) throw new Error("You have no charge on this event");
+  if (!charge) throw await tError("payment", "errors.noCharge");
   if (charge.status !== "expired") {
-    throw new Error("Only an expired charge can be regenerated");
+    throw await tError("payment", "errors.onlyExpiredRegenerated");
   }
   await regenerateChargeRow(charge);
   revalidatePath(`/events/${eventId}`);
@@ -729,7 +750,7 @@ export async function adminSetConsumptionFlags(
 ) {
   await requireAdmin();
   const event = await getEvent(eventId);
-  if (!event) throw new Error("Event not found");
+  if (!event) throw await tError("common", "errors.eventNotFound");
 
   const supabase = createServerSupabaseClient();
   const membership = await getMembership(eventId, userId);
@@ -754,7 +775,7 @@ export async function adminSetConsumptionFlags(
     });
     if (error) throw new Error(`Failed to save flags: ${error.message}`);
   } else {
-    throw new Error("Participant not found");
+    throw await tError("event", "errors.participantNotFound");
   }
 
   const settings = await getChargeSettings(eventId);
@@ -771,18 +792,20 @@ export async function adminSetConsumptionFlags(
 
 export async function toggleAvailability(eventId: string, day: string) {
   const user = await requireUser();
-  if (!DAY_RE.test(day)) throw new Error("Invalid day");
+  if (!DAY_RE.test(day)) throw await tError("event", "errors.invalidDay");
 
   const event = await getEvent(eventId);
-  if (!event) throw new Error("Event not found");
-  if (event.status !== "open") throw new Error("Voting is closed");
+  if (!event) throw await tError("common", "errors.eventNotFound");
+  if (event.status !== "open") {
+    throw await tError("event", "errors.votingClosed");
+  }
 
   const membership = await getMembership(eventId, user.id);
   if (!canEnterEvent(user, event, membership)) {
-    throw new Error("You don't have access to this event");
+    throw await tError("common", "errors.noAccess");
   }
   if (day < event.window_start || day > event.window_end) {
-    throw new Error("Day is outside the event window");
+    throw await tError("event", "errors.outsideWindow");
   }
 
   const supabase = createServerSupabaseClient();

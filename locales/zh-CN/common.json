@@ -1,0 +1,38 @@
+{
+  "appName": "Gagasco",
+  "metaTitle": "Gagasco Organizer",
+  "metaDescription": "萨拉热窝，我们来了",
+  "logIn": "登录",
+  "logOut": "退出登录",
+  "admin": "（管理员）",
+  "save": "保存",
+  "cancel": "取消",
+  "language": "语言",
+  "backToEvents": "返回活动列表",
+  "status": {
+    "open": "投票进行中",
+    "closed": "投票已结束",
+    "finalized": "日期已确定",
+    "finalizedOn": "日期已确定：{{date}}"
+  },
+  "holidays": {
+    "newYear": "元旦",
+    "carnival": "狂欢节",
+    "goodFriday": "耶稣受难日",
+    "tiradentes": "蒂拉登特斯日",
+    "labourDay": "劳动节",
+    "corpusChristi": "基督圣体节",
+    "independence": "巴西独立日",
+    "aparecida": "阿帕雷西达圣母日",
+    "allSouls": "追思节",
+    "republic": "共和国日",
+    "blackAwareness": "黑人意识日",
+    "christmas": "圣诞节"
+  },
+  "errors": {
+    "notLoggedIn": "您尚未登录",
+    "adminsOnly": "仅限管理员",
+    "eventNotFound": "未找到活动",
+    "noAccess": "您无权访问此活动"
+  }
+}

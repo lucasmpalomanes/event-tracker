@@ -1,0 +1,13 @@
+{
+  "heroLead": "为下次聚会挑选最合适的日期。登录后即可查看活动，并为您有空的日子投票。",
+  "events": "活动",
+  "createEvent": "创建活动",
+  "noEvents": "还没有活动。",
+  "createFirst": "创建第一个吧！",
+  "pendingBadge_other": "{{count}} 个待处理申请",
+  "happeningOn": "活动日期：{{date}}",
+  "join": "加入",
+  "requestToEnter": "申请加入",
+  "awaitingApproval": "等待批准",
+  "requestAgain": "再次申请"
+}

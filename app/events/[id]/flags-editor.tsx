@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import { setConsumptionFlags } from "@/app/actions";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -18,6 +19,7 @@ export function FlagsEditor({
   noMeat: boolean;
   chargingActive: boolean;
 }) {
+  const { t } = useTranslation("budget");
   const [isPending, startTransition] = useTransition();
 
   function apply(flags: { noAlcohol: boolean; noMeat: boolean }) {
@@ -28,9 +30,7 @@ export function FlagsEditor({
 
   if (chargingActive) {
     return (
-      <p className="text-xs text-muted-foreground">
-        Charging is active — ask the admin to change your flags.
-      </p>
+      <p className="text-xs text-muted-foreground">{t("flags.locked")}</p>
     );
   }
 
@@ -50,7 +50,7 @@ export function FlagsEditor({
           htmlFor={`no-alcohol-${eventId}`}
           className="text-xs text-muted-foreground"
         >
-          Não bebo álcool
+          {t("flags.noAlcohol")}
         </Label>
       </div>
       <div className="flex items-center gap-2">
@@ -67,12 +67,10 @@ export function FlagsEditor({
           htmlFor={`no-meat-${eventId}`}
           className="text-xs text-muted-foreground"
         >
-          Não como carne
+          {t("flags.noMeat")}
         </Label>
       </div>
-      <p className="text-xs text-muted-foreground">
-        These affect how much you&apos;ll pay.
-      </p>
+      <p className="text-xs text-muted-foreground">{t("flags.hint")}</p>
     </div>
   );
 }

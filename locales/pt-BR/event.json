@@ -1,0 +1,95 @@
+{
+  "createEvent": "Criar evento",
+  "form": {
+    "title": "Título",
+    "description": "Descrição (opcional)",
+    "descriptionPlain": "Descrição",
+    "location": "Local (opcional)",
+    "locationPlain": "Local",
+    "firstDay": "Primeiro dia candidato",
+    "lastDay": "Último dia candidato",
+    "windowCap": "A janela pode abranger no máximo 6 meses.",
+    "autoApprove": "Aprovar novos membros automaticamente",
+    "autoApproveHint": "Quem pedir para entrar recebe acesso imediatamente, sem esperar sua aprovação. Você pode mudar isso depois."
+  },
+  "editDetails": "Editar detalhes",
+  "tabs": {
+    "dates": "Datas",
+    "budget": "Orçamento"
+  },
+  "pendingRequests": "Pedidos de acesso pendentes",
+  "approve": "Aprovar",
+  "reject": "Recusar",
+  "calendarOpen": "Clique nos dias em que você está disponível",
+  "calendarClosed": "Disponibilidade (votação encerrada)",
+  "autoApprove": {
+    "label": "Aprovação automática",
+    "tooltip": "Quando ativado, quem pedir para entrar recebe acesso imediatamente",
+    "title": "Ativar aprovação automática?",
+    "description_one": "Ativar a aprovação automática também aprova agora o {{count}} pedido pendente. Continuar?",
+    "description_other": "Ativar a aprovação automática também aprova agora os {{count}} pedidos pendentes. Continuar?",
+    "confirm": "Ativar"
+  },
+  "closeVoting": {
+    "label": "Encerrar votação",
+    "title": "Encerrar votação?",
+    "description": "Encerrar a votação de \"{{title}}\"? Os participantes não poderão mais alterar a disponibilidade. Você pode reabrir a votação depois.",
+    "pending": "Encerrando…"
+  },
+  "reopenVoting": "Reabrir votação",
+  "deleteEvent": {
+    "label": "Excluir evento",
+    "title": "Excluir evento?",
+    "description": "Excluir \"{{title}}\"? Isso remove também todos os pedidos de acesso e votos. Isso não pode ser desfeito.",
+    "pending": "Excluindo…"
+  },
+  "legend": {
+    "holiday": "Feriado",
+    "weekend": "Fim de semana",
+    "available": "Você está disponível"
+  },
+  "mostVoted": "Dias mais votados",
+  "noVotes": "Nenhum voto ainda.",
+  "votes_one": "{{count}} voto",
+  "votes_other": "{{count}} votos",
+  "removeVote": {
+    "label": "Remover voto",
+    "title": "Remover voto?",
+    "description": "Remover o voto de {{name}} em {{date}}? Isso não pode ser desfeito.",
+    "tooltip": "Remover o voto de {{name}} em {{date}}"
+  },
+  "finalize": {
+    "pick": "Escolher",
+    "title": "Finalizar esta data?",
+    "description": "Finalizar {{date}} para \"{{title}}\"? A votação termina e o evento não pode ser reaberto. Isso não pode ser desfeito.",
+    "confirm": "Finalizar",
+    "tooltip": "Finalizar esta data"
+  },
+  "participants": "Participantes",
+  "creator": "(criador)",
+  "clearVotes": {
+    "label": "Limpar votos",
+    "title": "Limpar votos?",
+    "description": "Limpar todos os {{count}} votos de {{name}} neste evento? A pessoa continua no evento e pode votar de novo. Isso não pode ser desfeito.",
+    "pending": "Limpando…"
+  },
+  "removeParticipant": {
+    "label": "Remover",
+    "title": "Remover participante?",
+    "description": "Remover {{name}} deste evento? Todos os votos dessa pessoa são apagados também. Ela pode pedir para entrar de novo depois. Isso não pode ser desfeito.",
+    "pending": "Removendo…"
+  },
+  "errors": {
+    "titleRequired": "O título é obrigatório",
+    "windowRequired": "As duas datas da janela são obrigatórias",
+    "windowOrder": "O fim da janela não pode ser antes do início",
+    "windowCap": "A janela pode abranger no máximo 6 meses",
+    "invalidDay": "Dia inválido",
+    "votingClosed": "A votação está encerrada",
+    "outsideWindow": "O dia está fora da janela do evento",
+    "alreadyFinalized": "Já finalizado",
+    "finalizedOutsideWindow": "A data finalizada deve estar dentro da janela do evento",
+    "participantNotFound": "Participante não encontrado",
+    "creatorNotRemovable": "O criador do evento não pode ser removido"
+  }
+}

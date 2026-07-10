@@ -1,0 +1,95 @@
+{
+  "createEvent": "Create event",
+  "form": {
+    "title": "Title",
+    "description": "Description (optional)",
+    "descriptionPlain": "Description",
+    "location": "Location (optional)",
+    "locationPlain": "Location",
+    "firstDay": "First candidate day",
+    "lastDay": "Last candidate day",
+    "windowCap": "The window may span at most 6 months.",
+    "autoApprove": "Auto-approve new members",
+    "autoApproveHint": "Anyone who asks to enter gets access immediately, without waiting for your approval. You can change this later."
+  },
+  "editDetails": "Edit details",
+  "tabs": {
+    "dates": "Dates",
+    "budget": "Budget"
+  },
+  "pendingRequests": "Pending access requests",
+  "approve": "Approve",
+  "reject": "Reject",
+  "calendarOpen": "Click the days you're available",
+  "calendarClosed": "Availability (voting closed)",
+  "autoApprove": {
+    "label": "Auto-approve",
+    "tooltip": "When on, anyone who asks to enter gets access immediately",
+    "title": "Turn on auto-approve?",
+    "description_one": "Turning on auto-approve will also approve the {{count}} pending request right now. Continue?",
+    "description_other": "Turning on auto-approve will also approve the {{count}} pending requests right now. Continue?",
+    "confirm": "Turn on"
+  },
+  "closeVoting": {
+    "label": "Close voting",
+    "title": "Close voting?",
+    "description": "Close voting for \"{{title}}\"? Participants can no longer change their availability. You can reopen voting later.",
+    "pending": "Closing…"
+  },
+  "reopenVoting": "Reopen voting",
+  "deleteEvent": {
+    "label": "Delete event",
+    "title": "Delete event?",
+    "description": "Delete \"{{title}}\"? This removes all access requests and votes too. This cannot be undone.",
+    "pending": "Deleting…"
+  },
+  "legend": {
+    "holiday": "Holiday",
+    "weekend": "Weekend",
+    "available": "You're available"
+  },
+  "mostVoted": "Most voted days",
+  "noVotes": "No votes yet.",
+  "votes_one": "{{count}} vote",
+  "votes_other": "{{count}} votes",
+  "removeVote": {
+    "label": "Remove vote",
+    "title": "Remove vote?",
+    "description": "Remove {{name}}'s vote on {{date}}? This cannot be undone.",
+    "tooltip": "Remove {{name}}'s vote on {{date}}"
+  },
+  "finalize": {
+    "pick": "Pick",
+    "title": "Finalize this date?",
+    "description": "Finalize {{date}} for \"{{title}}\"? Voting ends and the event cannot be reopened. This cannot be undone.",
+    "confirm": "Finalize",
+    "tooltip": "Finalize this date"
+  },
+  "participants": "Participants",
+  "creator": "(creator)",
+  "clearVotes": {
+    "label": "Clear votes",
+    "title": "Clear votes?",
+    "description": "Clear all {{count}} of {{name}}'s votes for this event? They stay in the event and can vote again. This cannot be undone.",
+    "pending": "Clearing…"
+  },
+  "removeParticipant": {
+    "label": "Remove",
+    "title": "Remove participant?",
+    "description": "Remove {{name}} from this event? All of their votes are deleted too. They can request to enter again later. This cannot be undone.",
+    "pending": "Removing…"
+  },
+  "errors": {
+    "titleRequired": "Title is required",
+    "windowRequired": "Both window dates are required",
+    "windowOrder": "Window end must not be before window start",
+    "windowCap": "The date window may span at most 6 months",
+    "invalidDay": "Invalid day",
+    "votingClosed": "Voting is closed",
+    "outsideWindow": "Day is outside the event window",
+    "alreadyFinalized": "Already finalized",
+    "finalizedOutsideWindow": "Finalized date must be inside the event window",
+    "participantNotFound": "Participant not found",
+    "creatorNotRemovable": "The event's creator cannot be removed"
+  }
+}

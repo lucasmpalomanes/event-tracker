@@ -1,0 +1,69 @@
+{
+  "yourPayment": "您的付款",
+  "expiresOn": "有效期至 {{date}}",
+  "qrAlt": "Pix 二维码",
+  "instructions": "通过二维码付款，或复制 Pix 码（copia e cola）并粘贴到您的银行应用中。",
+  "copy": "复制代码",
+  "copied": "已复制",
+  "paidBadge": "已支付 ✓",
+  "paidOn": "于 {{date}}",
+  "paidManually": "（由组织者确认）",
+  "expiredBadge": "代码已过期",
+  "regenerateMine": "生成新代码",
+  "status": {
+    "paid": "已支付",
+    "manual": "（手动）",
+    "pending": "待支付 · 有效期至 {{date}}",
+    "expired": "已过期",
+    "refunded": "已退款"
+  },
+  "removed": "已移除",
+  "flags": {
+    "drinks": "喝酒",
+    "noDrinks": "不喝酒",
+    "eatsMeat": "吃肉",
+    "noMeat": "不吃肉"
+  },
+  "changeFlags": {
+    "title": "修改 {{name}} 的偏好？",
+    "regenDescription": "其未支付的收款将被取消，并按新金额重新生成（新的 Pix 码）。",
+    "nextDescription": "这会改变此人下一笔收款的应付金额。",
+    "confirm": "修改"
+  },
+  "markPaid": {
+    "label": "标记已付",
+    "title": "将 {{name}} 标记为已支付？",
+    "description": "当款项没有通过 Pix 码到账时使用 — 例如 webhook 未送达或用现金支付。会记录为手动确认。",
+    "confirm": "标记已付"
+  },
+  "regenerate": "重新生成",
+  "cancelCharge": {
+    "label": "取消",
+    "title": "取消 {{name}} 的收款？",
+    "description": "此人将无法再用该代码付款。之后可以通过修改偏好或重新开启收款来重新生成。",
+    "confirm": "取消收款"
+  },
+  "markRefunded": {
+    "label": "标记已退款",
+    "title": "将 {{name}} 标记为已退款？",
+    "description": "请仅在通过您的银行应用手动退款之后确认 — 本应用不会转移资金。该金额会从已收总额中扣除。",
+    "confirm": "标记已退款"
+  },
+  "totals": {
+    "collected": "已收款",
+    "outstanding": "待收款",
+    "refunded": "已退款"
+  },
+  "errors": {
+    "notFinalized": "只有日期已确定的活动才能开启收款",
+    "pricesPositive": "价格必须为正数",
+    "minimumPositive": "基础价格减去两项扣减后必须大于零",
+    "onlyUnpaidPaid": "只有未支付的收款才能标记为已支付",
+    "onlyPaidRefunded": "只有已支付的收款才能标记为已退款",
+    "onlyUnpaidCanceled": "只有未支付的收款才能取消",
+    "onlyExpiredRegenerated": "只有已过期的收款才能重新生成",
+    "noCharge": "您在此活动中没有收款",
+    "chargeNotFound": "未找到收款",
+    "flagsLocked": "收款已开启 — 请联系管理员修改您的偏好"
+  }
+}

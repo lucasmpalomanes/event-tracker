@@ -14,7 +14,9 @@ export default function Loading() {
       </header>
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-8 py-12">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight">Events</h1>
+          {/* The heading is a skeleton too — the locale isn't resolved here,
+              and a hardcoded word would flash untranslated (specs/i18n.md). */}
+          <Skeleton className="h-8 w-32" />
           <Skeleton className="h-7 w-28 rounded-2xl" />
         </div>
         <div className="flex flex-col gap-3">

@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CheckIcon, CopyIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Copies the Pix copia-e-cola payload (specs/pix-payments.md §7.1).
 export function CopyButton({ value }: { value: string }) {
+  const { t } = useTranslation("payment");
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -19,12 +21,12 @@ export function CopyButton({ value }: { value: string }) {
       {copied ? (
         <>
           <CheckIcon data-icon="inline-start" />
-          Copiado
+          {t("copied")}
         </>
       ) : (
         <>
           <CopyIcon data-icon="inline-start" />
-          Copiar código
+          {t("copy")}
         </>
       )}
     </Button>

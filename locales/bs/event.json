@@ -1,0 +1,97 @@
+{
+  "createEvent": "Kreiraj događaj",
+  "form": {
+    "title": "Naslov",
+    "description": "Opis (opcionalno)",
+    "descriptionPlain": "Opis",
+    "location": "Lokacija (opcionalno)",
+    "locationPlain": "Lokacija",
+    "firstDay": "Prvi mogući dan",
+    "lastDay": "Posljednji mogući dan",
+    "windowCap": "Period može trajati najviše 6 mjeseci.",
+    "autoApprove": "Automatski odobri nove članove",
+    "autoApproveHint": "Svako ko zatraži pristup odmah ga dobija, bez čekanja na vaše odobrenje. Ovo možete promijeniti kasnije."
+  },
+  "editDetails": "Uredi detalje",
+  "tabs": {
+    "dates": "Datumi",
+    "budget": "Budžet"
+  },
+  "pendingRequests": "Zahtjevi za pristup na čekanju",
+  "approve": "Odobri",
+  "reject": "Odbij",
+  "calendarOpen": "Kliknite na dane kada ste slobodni",
+  "calendarClosed": "Dostupnost (glasanje zatvoreno)",
+  "autoApprove": {
+    "label": "Automatsko odobravanje",
+    "tooltip": "Kada je uključeno, svako ko zatraži pristup odmah ga dobija",
+    "title": "Uključiti automatsko odobravanje?",
+    "description_one": "Uključivanje automatskog odobravanja odmah će odobriti i {{count}} zahtjev na čekanju. Nastaviti?",
+    "description_few": "Uključivanje automatskog odobravanja odmah će odobriti i {{count}} zahtjeva na čekanju. Nastaviti?",
+    "description_other": "Uključivanje automatskog odobravanja odmah će odobriti i {{count}} zahtjeva na čekanju. Nastaviti?",
+    "confirm": "Uključi"
+  },
+  "closeVoting": {
+    "label": "Zatvori glasanje",
+    "title": "Zatvoriti glasanje?",
+    "description": "Zatvoriti glasanje za \"{{title}}\"? Učesnici više neće moći mijenjati svoju dostupnost. Glasanje možete ponovo otvoriti kasnije.",
+    "pending": "Zatvaranje…"
+  },
+  "reopenVoting": "Ponovo otvori glasanje",
+  "deleteEvent": {
+    "label": "Obriši događaj",
+    "title": "Obrisati događaj?",
+    "description": "Obrisati \"{{title}}\"? Ovo briše i sve zahtjeve za pristup i glasove. Ovo se ne može poništiti.",
+    "pending": "Brisanje…"
+  },
+  "legend": {
+    "holiday": "Praznik",
+    "weekend": "Vikend",
+    "available": "Slobodni ste"
+  },
+  "mostVoted": "Dani s najviše glasova",
+  "noVotes": "Još nema glasova.",
+  "votes_one": "{{count}} glas",
+  "votes_few": "{{count}} glasa",
+  "votes_other": "{{count}} glasova",
+  "removeVote": {
+    "label": "Ukloni glas",
+    "title": "Ukloniti glas?",
+    "description": "Ukloniti glas korisnika {{name}} za {{date}}? Ovo se ne može poništiti.",
+    "tooltip": "Ukloni glas korisnika {{name}} za {{date}}"
+  },
+  "finalize": {
+    "pick": "Izaberi",
+    "title": "Finalizirati ovaj datum?",
+    "description": "Finalizirati {{date}} za \"{{title}}\"? Glasanje se završava i događaj se ne može ponovo otvoriti. Ovo se ne može poništiti.",
+    "confirm": "Finaliziraj",
+    "tooltip": "Finaliziraj ovaj datum"
+  },
+  "participants": "Učesnici",
+  "creator": "(kreator)",
+  "clearVotes": {
+    "label": "Obriši glasove",
+    "title": "Obrisati glasove?",
+    "description": "Obrisati sve glasove ({{count}}) korisnika {{name}} za ovaj događaj? Osoba ostaje u događaju i može ponovo glasati. Ovo se ne može poništiti.",
+    "pending": "Brisanje…"
+  },
+  "removeParticipant": {
+    "label": "Ukloni",
+    "title": "Ukloniti učesnika?",
+    "description": "Ukloniti {{name}} iz ovog događaja? Svi glasovi te osobe se također brišu. Kasnije može ponovo zatražiti pristup. Ovo se ne može poništiti.",
+    "pending": "Uklanjanje…"
+  },
+  "errors": {
+    "titleRequired": "Naslov je obavezan",
+    "windowRequired": "Oba datuma perioda su obavezna",
+    "windowOrder": "Kraj perioda ne može biti prije početka",
+    "windowCap": "Period može trajati najviše 6 mjeseci",
+    "invalidDay": "Nevažeći dan",
+    "votingClosed": "Glasanje je zatvoreno",
+    "outsideWindow": "Dan je izvan perioda događaja",
+    "alreadyFinalized": "Već finalizirano",
+    "finalizedOutsideWindow": "Finalizirani datum mora biti unutar perioda događaja",
+    "participantNotFound": "Učesnik nije pronađen",
+    "creatorNotRemovable": "Kreator događaja ne može biti uklonjen"
+  }
+}
