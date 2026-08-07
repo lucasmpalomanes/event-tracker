@@ -136,6 +136,29 @@ create table if not exists event_charge_settings (
            - no_meat_deduction_cents > 0)
 );
 
+-- event_companions (specs/companions.md §4) -----------------------------------
+-- Guests without accounts, attached to the participant who brought them
+-- (and pays for them). Keyed on the user, not the membership row, so the
+-- implicitly-approved creator can host companions before their membership
+-- row exists. The 10-per-host cap and the 60-char name limit are enforced
+-- in the server layer, not here (§4).
+create table if not exists event_companions (
+  id uuid primary key default gen_random_uuid(),
+  event_id uuid not null references events (id) on delete cascade,
+  host_user_id uuid not null references users (id) on delete cascade,
+  name text not null check (name <> ''),
+  no_alcohol boolean not null default false,
+  no_meat boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists event_companions_event_idx
+  on event_companions (event_id);
+
+create index if not exists event_companions_event_host_idx
+  on event_companions (event_id, host_user_id);
+
 -- pix_charges (specs/pix-payments.md §4) --------------------------------------
 create table if not exists pix_charges (
   id uuid primary key default gen_random_uuid(),

@@ -3,9 +3,11 @@ import {
   amountFor,
   computeShares,
   formatBRL,
+  hostAmount,
   type BudgetItem,
   type ChargeSettings,
 } from "@/lib/budget";
+import { companionsOf, type Companion } from "@/lib/companions";
 import {
   reconcileChargeWithPsp,
   type PixChargeWithUser,
@@ -21,9 +23,24 @@ import {
   BudgetItemsEditor,
   type EditableBudgetItem,
 } from "./budget-items-editor";
+import { CompanionsEditor } from "./companions-editor";
 import { FlagsEditor } from "./flags-editor";
 import { PaymentBoard } from "./payment-board";
 import { PaymentCard } from "./payment-card";
+
+// " (não bebe, não come carne)" markers next to a unit's name
+// (specs/companions.md §7.1–7.4); empty for a unit with neither flag.
+function flagsNote(
+  noAlcohol: boolean,
+  noMeat: boolean,
+  t: (key: string) => string
+): string {
+  const notes = [
+    noAlcohol ? t("marker.noAlcohol") : null,
+    noMeat ? t("marker.noMeat") : null,
+  ].filter(Boolean);
+  return notes.length > 0 ? ` (${notes.join(", ")})` : "";
+}
 
 // The Budget tab (specs/event-budget.md §6): itemized costs, live per-person
 // shares, the viewer's own flags + share, and — the money story — the Pix
@@ -33,6 +50,7 @@ export async function BudgetTab({
   viewerId,
   isAdmin,
   participants,
+  companions,
   items,
   chargeSettings,
   charges,
@@ -41,23 +59,38 @@ export async function BudgetTab({
   viewerId: string;
   isAdmin: boolean;
   participants: Participant[];
+  companions: Companion[];
   items: BudgetItem[];
   chargeSettings: ChargeSettings | null;
   charges: PixChargeWithUser[];
 }) {
   const { t } = await getT("budget");
 
-  const shares = computeShares(
-    items,
-    participants.map((p) => ({ no_alcohol: p.noAlcohol, no_meat: p.noMeat })),
-  );
+  // The split's unit of account is the billable unit: one participant or one
+  // companion (specs/companions.md §5).
+  const shares = computeShares(items, [
+    ...participants.map((p) => ({
+      no_alcohol: p.noAlcohol,
+      no_meat: p.noMeat,
+    })),
+    ...companions.map((c) => ({
+      no_alcohol: c.no_alcohol,
+      no_meat: c.no_meat,
+    })),
+  ]);
 
   const viewer = participants.find((p) => p.userId === viewerId);
   const viewerFlags = {
     no_alcohol: viewer?.noAlcohol ?? false,
     no_meat: viewer?.noMeat ?? false,
   };
-  const yourShare = amountFor(shares, viewerFlags);
+  const myCompanions = companionsOf(companions, viewerId);
+  // The headline is the host's total: own unit + one per companion (§7.1).
+  const yourShare = hostAmount(
+    shares,
+    viewerFlags,
+    myCompanions.map((c) => ({ no_alcohol: c.no_alcohol, no_meat: c.no_meat }))
+  );
   const fullPrice = shares.generalShare + shares.alcoholShare + shares.meatShare;
 
   const groupSize: Record<BudgetItem["exemption"], number> = {
@@ -118,6 +151,7 @@ export async function BudgetTab({
           charge={myCharge}
           settings={chargeSettings}
           flags={viewerFlags}
+          companions={myCompanions}
         />
       )}
 
@@ -133,6 +167,12 @@ export async function BudgetTab({
                 email: p.email,
                 noAlcohol: p.noAlcohol,
                 noMeat: p.noMeat,
+                // Priced into the host's single charge (specs/companions.md §7.3).
+                companions: companionsOf(companions, p.userId).map((c) => ({
+                  name: c.name,
+                  noAlcohol: c.no_alcohol,
+                  noMeat: c.no_meat,
+                })),
               }))}
               prefill={items.length > 0 ? mapped : null}
             />
@@ -170,6 +210,7 @@ export async function BudgetTab({
           <PaymentBoard
             eventId={event.id}
             participants={participants}
+            companions={companions}
             charges={charges}
           />
         </Card>
@@ -212,9 +253,21 @@ export async function BudgetTab({
       {items.length > 0 && (
         <Card className="gap-3 p-4">
           <h2 className="font-medium">{t("costSplit")}</h2>
+          {/* Units, with the composition spelled out when companions exist
+              (specs/companions.md §7.2). */}
           <p className="text-sm text-muted-foreground">
-            {t("headcount", { count: shares.headcount })} ·{" "}
-            {t("drinkers", { count: shares.drinkers })} ·{" "}
+            {companions.length > 0 ? (
+              <>
+                {t("unitsTotal", { count: shares.headcount })} (
+                {t("headcount", {
+                  count: shares.headcount - companions.length,
+                })}{" "}
+                + {t("companionsCount", { count: companions.length })})
+              </>
+            ) : (
+              t("headcount", { count: shares.headcount })
+            )}{" "}
+            · {t("drinkers", { count: shares.drinkers })} ·{" "}
             {t("meatEaters", { count: shares.meatEaters })}
           </p>
           {shares.unsplitAlcohol && (
@@ -253,20 +306,56 @@ export async function BudgetTab({
       )}
 
       <Card className="gap-3 p-4">
-        <h2 className="font-medium">{t("yourShare")}</h2>
+        <h2 className="font-medium">
+          {myCompanions.length > 0
+            ? t("yourShareWithCompanions", { count: myCompanions.length })
+            : t("yourShare")}
+        </h2>
         {items.length > 0 ? (
-          <p className="text-lg font-semibold">
-            {deductions.length > 0 ? (
-              <>
-                <span className="font-normal text-muted-foreground">
-                  {formatBRL(fullPrice)} {deductions.join(" ")} ={" "}
-                </span>
-                {formatBRL(yourShare)}
-              </>
-            ) : (
-              formatBRL(yourShare)
-            )}
-          </p>
+          myCompanions.length > 0 ? (
+            // Host total with the per-person breakdown (specs/companions.md §7.1).
+            <div className="flex flex-col gap-1">
+              <p className="text-lg font-semibold">{formatBRL(yourShare)}</p>
+              <ul className="flex flex-col gap-0.5 text-sm text-muted-foreground">
+                <li className="flex justify-between">
+                  <span>
+                    {t("you")}
+                    {flagsNote(viewerFlags.no_alcohol, viewerFlags.no_meat, t)}
+                  </span>
+                  <span>{formatBRL(amountFor(shares, viewerFlags))}</span>
+                </li>
+                {myCompanions.map((c) => (
+                  <li key={c.id} className="flex justify-between">
+                    <span>
+                      {c.name}
+                      {flagsNote(c.no_alcohol, c.no_meat, t)}
+                    </span>
+                    <span>
+                      {formatBRL(
+                        amountFor(shares, {
+                          no_alcohol: c.no_alcohol,
+                          no_meat: c.no_meat,
+                        })
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="text-lg font-semibold">
+              {deductions.length > 0 ? (
+                <>
+                  <span className="font-normal text-muted-foreground">
+                    {formatBRL(fullPrice)} {deductions.join(" ")} ={" "}
+                  </span>
+                  {formatBRL(yourShare)}
+                </>
+              ) : (
+                formatBRL(yourShare)
+              )}
+            </p>
+          )
         ) : (
           <p className="text-sm text-muted-foreground">{t("noItemsShare")}</p>
         )}
@@ -277,6 +366,33 @@ export async function BudgetTab({
           noMeat={viewerFlags.no_meat}
           chargingActive={chargeSettings !== null}
         />
+        <Separator />
+        {/* Same editing window as the flags (specs/companions.md §6): the
+            editor while charging is inactive, a read-only list after. */}
+        <div className="flex flex-col gap-2">
+          <h3 className="text-sm font-medium">{t("companions.title")}</h3>
+          {chargeSettings === null ? (
+            <CompanionsEditor
+              eventId={event.id}
+              companions={myCompanions.map((c) => ({
+                id: c.id,
+                name: c.name,
+                noAlcohol: c.no_alcohol,
+                noMeat: c.no_meat,
+              }))}
+            />
+          ) : myCompanions.length > 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {myCompanions
+                .map((c) => `${c.name}${flagsNote(c.no_alcohol, c.no_meat, t)}`)
+                .join(" · ")}
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              {t("companions.none")}
+            </p>
+          )}
+        </div>
       </Card>
     </>
   );

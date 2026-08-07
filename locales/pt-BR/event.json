@@ -76,7 +76,7 @@
   "removeParticipant": {
     "label": "Remover",
     "title": "Remover participante?",
-    "description": "Remover {{name}} deste evento? Todos os votos dessa pessoa são apagados também. Ela pode pedir para entrar de novo depois. Isso não pode ser desfeito.",
+    "description": "Remover {{name}} deste evento? Todos os votos e acompanhantes dessa pessoa são apagados também. Ela pode pedir para entrar de novo depois. Isso não pode ser desfeito.",
     "pending": "Removendo…"
   },
   "errors": {

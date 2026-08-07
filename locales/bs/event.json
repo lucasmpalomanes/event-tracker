@@ -78,7 +78,7 @@
   "removeParticipant": {
     "label": "Ukloni",
     "title": "Ukloniti učesnika?",
-    "description": "Ukloniti {{name}} iz ovog događaja? Svi glasovi te osobe se također brišu. Kasnije može ponovo zatražiti pristup. Ovo se ne može poništiti.",
+    "description": "Ukloniti {{name}} iz ovog događaja? Svi glasovi i pratioci te osobe se također brišu. Kasnije može ponovo zatražiti pristup. Ovo se ne može poništiti.",
     "pending": "Uklanjanje…"
   },
   "errors": {

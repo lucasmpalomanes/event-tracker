@@ -74,7 +74,7 @@
   "removeParticipant": {
     "label": "移除",
     "title": "移除参与者？",
-    "description": "将 {{name}} 从此活动中移除？其所有投票也会被删除。此人以后可以再次申请加入。此操作无法撤销。",
+    "description": "将 {{name}} 从此活动中移除？其所有投票和同伴也会被删除。此人以后可以再次申请加入。此操作无法撤销。",
     "pending": "正在移除…"
   },
   "errors": {

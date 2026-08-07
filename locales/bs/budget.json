@@ -73,11 +73,43 @@
     "description_few": "Ovo kreira Pix naplatu za svakog od {{count}} odobrena učesnika. Cijene se zamrzavaju — kasnija promjena znači deaktivaciju i ponovnu aktivaciju.",
     "description_other": "Ovo kreira Pix naplatu za svakog od {{count}} odobrenih učesnika. Cijene se zamrzavaju — kasnija promjena znači deaktivaciju i ponovnu aktivaciju.",
     "confirm": "Aktiviraj",
-    "failed": "Aktivacija nije uspjela"
+    "failed": "Aktivacija nije uspjela",
+    "unitsNote": "Naplate ukupno pokrivaju {{count}} osoba, uključujući pratioce."
   },
   "errors": {
     "nameRequired": "Naziv stavke je obavezan",
     "amountPositive": "Iznos stavke mora biti pozitivan",
-    "invalidExemption": "Nevažeća grupa izuzeća"
+    "invalidExemption": "Nevažeća grupa izuzeća",
+    "companionNameRequired": "Ime pratioca je obavezno",
+    "companionNameTooLong": "Ime pratioca može imati najviše {{max}} znakova",
+    "companionNotFound": "Pratilac nije pronađen",
+    "companionLimit": "Ograničenje od {{max}} pratilaca po osobi",
+    "companionsLocked": "Naplata je aktivna — zamolite organizatora da izmijeni vaše pratioce."
+  },
+  "you": "Vi",
+  "yourShareWithCompanions_one": "Vaš dio + {{count}} pratilac",
+  "yourShareWithCompanions_few": "Vaš dio + {{count}} pratioca",
+  "yourShareWithCompanions_other": "Vaš dio + {{count}} pratilaca",
+  "unitsTotal_one": "{{count}} osoba",
+  "unitsTotal_few": "{{count}} osobe",
+  "unitsTotal_other": "{{count}} osoba",
+  "companionsCount_one": "{{count}} pratilac",
+  "companionsCount_few": "{{count}} pratioca",
+  "companionsCount_other": "{{count}} pratilaca",
+  "marker": {
+    "noAlcohol": "ne pije",
+    "noMeat": "ne jede meso"
+  },
+  "companions": {
+    "title": "Pratioci",
+    "namePlaceholder": "Ime pratioca",
+    "add": "Dodaj pratioca",
+    "adding": "Dodavanje…",
+    "remove": "Ukloni {{name}}",
+    "removeLabel": "Ukloni",
+    "noAlcohol": "Ne pije alkohol",
+    "noMeat": "Ne jede meso",
+    "none": "Nema pratilaca.",
+    "regenNote": "Izmjene regenerišu neplaćenu naplatu ove osobe s novim iznosom; plaćene naplate se ne diraju."
   }
 }

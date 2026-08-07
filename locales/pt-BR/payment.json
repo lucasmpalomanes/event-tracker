@@ -65,5 +65,6 @@
     "noCharge": "Você não tem cobrança neste evento",
     "chargeNotFound": "Cobrança não encontrada",
     "flagsLocked": "A cobrança está ativa — peça ao organizador para alterar suas preferências"
-  }
+  },
+  "covers": "Cobre: {{names}}"
 }

@@ -107,4 +107,17 @@ export function amountFor(
   );
 }
 
+// What a host owes: their own unit plus one unit per companion they bring
+// (specs/companions.md §5).
+export function hostAmount(
+  shares: BudgetShares,
+  hostFlags: ConsumptionFlags,
+  companionFlags: ConsumptionFlags[]
+): number {
+  return companionFlags.reduce(
+    (sum, flags) => sum + amountFor(shares, flags),
+    amountFor(shares, hostFlags)
+  );
+}
+
 export { formatBRL } from "@/lib/format";

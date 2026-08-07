@@ -65,5 +65,6 @@
     "noCharge": "Nemate naplatu za ovaj događaj",
     "chargeNotFound": "Naplata nije pronađena",
     "flagsLocked": "Naplata je aktivna — zamolite administratora da promijeni vaše postavke"
-  }
+  },
+  "covers": "Pokriva: {{names}}"
 }
