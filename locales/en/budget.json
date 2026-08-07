@@ -68,11 +68,40 @@
     "description_one": "This creates a Pix charge for the {{count}} approved participant. Prices are frozen — changing them later means deactivating and reactivating.",
     "description_other": "This creates a Pix charge for each of the {{count}} approved participants. Prices are frozen — changing them later means deactivating and reactivating.",
     "confirm": "Activate",
-    "failed": "Activation failed"
+    "failed": "Activation failed",
+    "unitsNote": "In total, the charges cover {{count}} people, companions included."
   },
   "errors": {
     "nameRequired": "Item name is required",
     "amountPositive": "Item amount must be a positive value",
-    "invalidExemption": "Invalid exemption group"
+    "invalidExemption": "Invalid exemption group",
+    "companionNameRequired": "Companion name is required",
+    "companionNameTooLong": "Companion name must be at most {{max}} characters",
+    "companionNotFound": "Companion not found",
+    "companionLimit": "Limit of {{max}} companions per person",
+    "companionsLocked": "Charging is active — ask the organizer to change your companions."
+  },
+  "you": "You",
+  "yourShareWithCompanions_one": "Your share + {{count}} companion",
+  "yourShareWithCompanions_other": "Your share + {{count}} companions",
+  "unitsTotal_one": "{{count}} person",
+  "unitsTotal_other": "{{count}} people",
+  "companionsCount_one": "{{count}} companion",
+  "companionsCount_other": "{{count}} companions",
+  "marker": {
+    "noAlcohol": "doesn't drink",
+    "noMeat": "doesn't eat meat"
+  },
+  "companions": {
+    "title": "Companions",
+    "namePlaceholder": "Companion name",
+    "add": "Add companion",
+    "adding": "Adding…",
+    "remove": "Remove {{name}}",
+    "removeLabel": "Remove",
+    "noAlcohol": "Doesn't drink alcohol",
+    "noMeat": "Doesn't eat meat",
+    "none": "No companions.",
+    "regenNote": "Changes regenerate this person's unpaid charge at the new amount; paid charges are never touched."
   }
 }

@@ -1,7 +1,8 @@
 import QRCode from "qrcode";
 import { regenerateMyCharge } from "@/app/actions";
 import type { ChargeSettings, ConsumptionFlags } from "@/lib/budget";
-import type { PixCharge } from "@/lib/charges";
+import type { Companion } from "@/lib/companions";
+import { unitAmountFor, type PixCharge } from "@/lib/charges";
 import { formatBRL, formatDay } from "@/lib/format";
 import { getT } from "@/lib/i18n/server";
 import { Badge } from "@/components/ui/badge";
@@ -17,11 +18,13 @@ export async function PaymentCard({
   charge,
   settings,
   flags,
+  companions,
 }: {
   eventId: string;
   charge: PixCharge;
   settings: ChargeSettings;
   flags: ConsumptionFlags;
+  companions: Companion[];
 }) {
   const { t, locale } = await getT("payment");
   const { t: tBudget } = await getT("budget");
@@ -59,18 +62,54 @@ export async function PaymentCard({
         )}
       </div>
 
-      <p className="text-lg font-semibold">
-        {deductions.length > 0 ? (
-          <>
-            <span className="font-normal text-muted-foreground">
-              {formatBRL(settings.base_price_cents)} {deductions.join(" ")} ={" "}
-            </span>
+      {companions.length > 0 ? (
+        // One charge covering the host and their companions — list the units
+        // so the total is explained (specs/companions.md §7.5).
+        <div className="flex flex-col gap-1">
+          <p className="text-lg font-semibold">
             {formatBRL(charge.amount_cents)}
-          </>
-        ) : (
-          formatBRL(charge.amount_cents)
-        )}
-      </p>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {t("covers", {
+              names: [tBudget("you"), ...companions.map((c) => c.name)].join(
+                " + "
+              ),
+            })}
+          </p>
+          <ul className="flex flex-col gap-0.5 text-sm text-muted-foreground">
+            <li className="flex justify-between">
+              <span>{tBudget("you")}</span>
+              <span>{formatBRL(unitAmountFor(settings, flags))}</span>
+            </li>
+            {companions.map((c) => (
+              <li key={c.id} className="flex justify-between">
+                <span>{c.name}</span>
+                <span>
+                  {formatBRL(
+                    unitAmountFor(settings, {
+                      no_alcohol: c.no_alcohol,
+                      no_meat: c.no_meat,
+                    })
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p className="text-lg font-semibold">
+          {deductions.length > 0 ? (
+            <>
+              <span className="font-normal text-muted-foreground">
+                {formatBRL(settings.base_price_cents)} {deductions.join(" ")} ={" "}
+              </span>
+              {formatBRL(charge.amount_cents)}
+            </>
+          ) : (
+            formatBRL(charge.amount_cents)
+          )}
+        </p>
+      )}
 
       {charge.status === "pending" && qrDataUrl && (
         <div className="flex flex-wrap items-start gap-4">

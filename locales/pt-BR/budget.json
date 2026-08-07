@@ -68,11 +68,40 @@
     "description_one": "Isso cria uma cobrança Pix para o {{count}} participante aprovado. Os preços ficam congelados — para alterá-los depois é preciso desativar e reativar.",
     "description_other": "Isso cria uma cobrança Pix para cada um dos {{count}} participantes aprovados. Os preços ficam congelados — para alterá-los depois é preciso desativar e reativar.",
     "confirm": "Ativar",
-    "failed": "Falha na ativação"
+    "failed": "Falha na ativação",
+    "unitsNote": "No total, as cobranças cobrem {{count}} pessoas, incluindo acompanhantes."
   },
   "errors": {
     "nameRequired": "O nome do item é obrigatório",
     "amountPositive": "O valor do item deve ser positivo",
-    "invalidExemption": "Grupo de isenção inválido"
+    "invalidExemption": "Grupo de isenção inválido",
+    "companionNameRequired": "O nome do acompanhante é obrigatório",
+    "companionNameTooLong": "O nome do acompanhante deve ter no máximo {{max}} caracteres",
+    "companionNotFound": "Acompanhante não encontrado",
+    "companionLimit": "Limite de {{max}} acompanhantes por pessoa",
+    "companionsLocked": "A cobrança está ativa — peça ao organizador para alterar seus acompanhantes."
+  },
+  "you": "Você",
+  "yourShareWithCompanions_one": "Sua parte + {{count}} acompanhante",
+  "yourShareWithCompanions_other": "Sua parte + {{count}} acompanhantes",
+  "unitsTotal_one": "{{count}} pessoa",
+  "unitsTotal_other": "{{count}} pessoas",
+  "companionsCount_one": "{{count}} acompanhante",
+  "companionsCount_other": "{{count}} acompanhantes",
+  "marker": {
+    "noAlcohol": "não bebe",
+    "noMeat": "não come carne"
+  },
+  "companions": {
+    "title": "Acompanhantes",
+    "namePlaceholder": "Nome do acompanhante",
+    "add": "Adicionar acompanhante",
+    "adding": "Adicionando…",
+    "remove": "Remover {{name}}",
+    "removeLabel": "Remover",
+    "noAlcohol": "Não bebe álcool",
+    "noMeat": "Não come carne",
+    "none": "Nenhum acompanhante.",
+    "regenNote": "Alterações regeneram a cobrança não paga desta pessoa com o novo valor; cobranças pagas não são alteradas."
   }
 }

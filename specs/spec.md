@@ -230,6 +230,10 @@ this page; anyone else is redirected back to the list with their request status.
 
 ### 5.3 Participant & vote removal (admin)
 
+> *(Amended 2026-08-07 by [`companions.md`](./companions.md) §6: removing a
+> participant also deletes their **companions** in the same operation —
+> votes → companions → membership.)*
+
 Admins can clean up an event's participation: kick a user who shouldn't be
 there, or delete stray/mistaken votes without kicking anyone.
 

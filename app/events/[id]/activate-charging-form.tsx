@@ -25,6 +25,8 @@ export type ActivationParticipant = {
   email: string;
   noAlcohol: boolean;
   noMeat: boolean;
+  // Priced into the host's single charge (specs/companions.md §6).
+  companions: { name: string; noAlcohol: boolean; noMeat: boolean }[];
 };
 
 function parseCents(value: string): number {
@@ -70,10 +72,15 @@ export function ActivateChargingForm({
   // A fully-deducted participant must still owe > 0 (specs/pix-payments.md §4).
   const minimumOk = valid && baseCents - alcoholCents - meatCents > 0;
 
+  const unitFor = (u: { noAlcohol: boolean; noMeat: boolean }) =>
+    baseCents - (u.noAlcohol ? alcoholCents : 0) - (u.noMeat ? meatCents : 0);
+  // One charge per host, covering their companions (specs/companions.md §7.3).
   const amountFor = (p: ActivationParticipant) =>
-    baseCents -
-    (p.noAlcohol ? alcoholCents : 0) -
-    (p.noMeat ? meatCents : 0);
+    p.companions.reduce((sum, c) => sum + unitFor(c), unitFor(p));
+  const totalUnits = participants.reduce(
+    (sum, p) => sum + 1 + p.companions.length,
+    0
+  );
 
   function confirm() {
     setError(null);
@@ -133,9 +140,24 @@ export function ActivateChargingForm({
       {minimumOk && (
         <ul className="flex flex-col gap-1 text-sm">
           {participants.map((p) => (
-            <li key={p.userId} className="flex justify-between">
-              <span>{p.name ?? p.email}</span>
-              <span className="font-medium">{formatBRL(amountFor(p))}</span>
+            <li key={p.userId} className="flex flex-col">
+              <span className="flex justify-between">
+                <span>
+                  {p.name ?? p.email}
+                  {p.companions.length > 0 && ` (+${p.companions.length})`}
+                </span>
+                <span className="font-medium">{formatBRL(amountFor(p))}</span>
+              </span>
+              {p.companions.length > 0 && (
+                <span className="flex flex-col text-xs text-muted-foreground">
+                  {p.companions.map((c, i) => (
+                    <span key={i} className="flex justify-between ps-4">
+                      <span>{c.name}</span>
+                      <span>{formatBRL(unitFor(c))}</span>
+                    </span>
+                  ))}
+                </span>
+              )}
             </li>
           ))}
         </ul>
@@ -155,6 +177,9 @@ export function ActivateChargingForm({
             <AlertDialogTitle>{t("activation.title")}</AlertDialogTitle>
             <AlertDialogDescription>
               {t("activation.description", { count: participants.length })}
+              {/* "3 cobranças para 5 pessoas" (specs/companions.md §7.3). */}
+              {totalUnits > participants.length &&
+                ` ${t("activation.unitsNote", { count: totalUnits })}`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

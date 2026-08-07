@@ -76,7 +76,7 @@
   "removeParticipant": {
     "label": "Remove",
     "title": "Remove participant?",
-    "description": "Remove {{name}} from this event? All of their votes are deleted too. They can request to enter again later. This cannot be undone.",
+    "description": "Remove {{name}} from this event? All of their votes and companions are deleted too. They can request to enter again later. This cannot be undone.",
     "pending": "Removing…"
   },
   "errors": {

@@ -65,5 +65,6 @@
     "noCharge": "You have no charge on this event",
     "chargeNotFound": "Charge not found",
     "flagsLocked": "Charging is active — ask the admin to change your flags"
-  }
+  },
+  "covers": "Covers: {{names}}"
 }

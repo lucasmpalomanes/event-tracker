@@ -97,6 +97,10 @@ amount = base_price
        - (no_meat    ? no_meat_deduction    : 0)
 ```
 
+> *(Amended 2026-08-07 by [`companions.md`](./companions.md) §6: the formula
+> above prices one **unit**; a participant's charge amount is now the sum of
+> their own unit plus one unit per companion they host.)*
+
 The admin confirms these three numbers in the activation form — typed by hand,
 or prefilled from the budget tab when the event has budget items
 ([`event-budget.md`](./event-budget.md) §5–6; same columns either way).
@@ -208,6 +212,11 @@ server-side only, same posture as the Supabase secret key. Test credentials
 in `.env.local`, production credentials on Vercel.
 
 ## 6. Lifecycle & rules
+
+> *(Amended 2026-08-07 by [`companions.md`](./companions.md) §6: charges are
+> priced over the host's units; admin edits to a participant's **companions**
+> regenerate their unpaid charge exactly like flag edits; participant removal
+> also deletes their companions.)*
 
 **Activation** (admin, on the date page of a `finalized` event)
 1. Admin opens "Ativar cobrança", enters base price + deductions, sees a

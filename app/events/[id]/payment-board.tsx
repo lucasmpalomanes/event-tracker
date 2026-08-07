@@ -7,14 +7,21 @@ import {
   regenerateParticipantCharge,
 } from "@/app/actions";
 import type { PixChargeWithUser } from "@/lib/charges";
+import { companionsOf, type Companion } from "@/lib/companions";
 import type { Participant } from "@/lib/events";
 import { formatBRL, formatDay } from "@/lib/format";
 import { getT } from "@/lib/i18n/server";
 import type { Locale } from "@/lib/i18n/config";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
+import { CompanionsEditor } from "./companions-editor";
 
 function StatusBadge({
   charge,
@@ -109,13 +116,16 @@ function FlagToggle({
 export async function PaymentBoard({
   eventId,
   participants,
+  companions,
   charges,
 }: {
   eventId: string;
   participants: Participant[];
+  companions: Companion[];
   charges: PixChargeWithUser[];
 }) {
   const { t, locale } = await getT("payment");
+  const { t: tBudget } = await getT("budget");
 
   const participantIds = new Set(participants.map((p) => p.userId));
   const liveByUser = new Map(
@@ -140,14 +150,18 @@ export async function PaymentBoard({
     who: string,
     flags: { noAlcohol: boolean; noMeat: boolean } | null,
     userId: string,
-    removed: boolean
+    removed: boolean,
+    hostCompanions: Companion[]
   ) => (
     <li
       key={`${userId}-${charge?.id ?? "none"}`}
       className="flex flex-col gap-1 py-2"
     >
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="font-medium">{who}</span>
+        <span className="font-medium">
+          {who}
+          {hostCompanions.length > 0 && ` (+${hostCompanions.length})`}
+        </span>
         {removed && <Badge variant="outline">{t("removed")}</Badge>}
         {charge && <StatusBadge charge={charge} t={t} locale={locale} />}
         <span className="ms-auto font-medium">
@@ -218,6 +232,36 @@ export async function PaymentBoard({
           </ConfirmActionButton>
         )}
       </div>
+      {/* Admin companion editing (specs/companions.md §7.4): every change
+          regenerates the host's unpaid charge server-side (§6). */}
+      {flags && (
+        <Collapsible>
+          <CollapsibleTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="xs"
+                className="px-0 text-muted-foreground"
+              />
+            }
+          >
+            {tBudget("companions.title")}
+            {hostCompanions.length > 0 && ` (${hostCompanions.length})`}
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-2">
+            <CompanionsEditor
+              eventId={eventId}
+              companions={hostCompanions.map((c) => ({
+                id: c.id,
+                name: c.name,
+                noAlcohol: c.no_alcohol,
+                noMeat: c.no_meat,
+              }))}
+              admin={{ hostUserId: userId, chargingActive: true }}
+            />
+          </CollapsibleContent>
+        </Collapsible>
+      )}
     </li>
   );
 
@@ -230,11 +274,14 @@ export async function PaymentBoard({
             p.name ?? p.email,
             { noAlcohol: p.noAlcohol, noMeat: p.noMeat },
             p.userId,
-            false
+            false,
+            companionsOf(companions, p.userId)
           )
         )}
+        {/* Removed participants' companions were deleted with them
+            (specs/companions.md §6) — no editor on kept rows. */}
         {removedCharges.map((c) =>
-          row(c, c.userName ?? c.userEmail, null, c.user_id, true)
+          row(c, c.userName ?? c.userEmail, null, c.user_id, true, [])
         )}
       </ul>
       <Separator />

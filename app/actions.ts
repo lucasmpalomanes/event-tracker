@@ -21,6 +21,13 @@ import {
   type PixCharge,
 } from "@/lib/charges";
 import { getChargeSettings } from "@/lib/budget";
+import {
+  companionFlagsOf,
+  listEventCompanions,
+  MAX_COMPANION_NAME_LENGTH,
+  MAX_COMPANIONS_PER_HOST,
+  type Companion,
+} from "@/lib/companions";
 import { cancelCharge as cancelPspCharge } from "@/lib/pix";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getT } from "@/lib/i18n/server";
@@ -339,8 +346,10 @@ export async function removeParticipant(eventId: string, membershipId: string) {
   // kept — money already moved (specs/pix-payments.md §6).
   await cancelUnpaidLiveCharge(eventId, membership.user_id);
 
-  // Membership deletion does not cascade to votes (specs/spec.md §4) — two
-  // explicit deletes, votes first so a failure never strands orphan votes.
+  // Membership deletion does not cascade to votes or companions
+  // (specs/spec.md §4, specs/companions.md §6) — explicit deletes, ordered
+  // votes → companions → membership, so a mid-way failure never strands
+  // rows pointing at a deleted membership.
   const { error: vError } = await supabase
     .from("availabilities")
     .delete()
@@ -348,6 +357,16 @@ export async function removeParticipant(eventId: string, membershipId: string) {
     .eq("user_id", membership.user_id);
   if (vError) {
     throw new Error(`Failed to remove participant's votes: ${vError.message}`);
+  }
+  const { error: cError } = await supabase
+    .from("event_companions")
+    .delete()
+    .eq("event_id", eventId)
+    .eq("host_user_id", membership.user_id);
+  if (cError) {
+    throw new Error(
+      `Failed to remove participant's companions: ${cError.message}`
+    );
   }
   const { error } = await supabase
     .from("event_memberships")
@@ -521,6 +540,200 @@ export async function setConsumptionFlags(
   revalidatePath(`/events/${eventId}`);
 }
 
+// --- companions (specs/companions.md) ----------------------------------------
+
+async function parseCompanionName(name: unknown): Promise<string> {
+  const trimmed = String(name ?? "").trim();
+  if (!trimmed) throw await tError("budget", "errors.companionNameRequired");
+  if (trimmed.length > MAX_COMPANION_NAME_LENGTH) {
+    throw await tError("budget", "errors.companionNameTooLong", {
+      max: MAX_COMPANION_NAME_LENGTH,
+    });
+  }
+  return trimmed;
+}
+
+// Loads a companion scoped to the event, or throws.
+async function requireCompanion(
+  eventId: string,
+  companionId: string
+): Promise<Companion> {
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("event_companions")
+    .select("id, event_id, host_user_id, name, no_alcohol, no_meat")
+    .eq("id", companionId)
+    .eq("event_id", eventId)
+    .maybeSingle();
+  if (error) throw new Error(`Failed to load companion: ${error.message}`);
+  if (!data) throw await tError("budget", "errors.companionNotFound");
+  return data as Companion;
+}
+
+// The participant edit window: own companions only, while charging is
+// inactive — the same rule as their own flags (specs/companions.md §6).
+async function requireCompanionSelfEdit(eventId: string) {
+  const user = await requireUser();
+  const event = await getEvent(eventId);
+  if (!event) throw await tError("common", "errors.eventNotFound");
+  const membership = await getMembership(eventId, user.id);
+  if (!canEnterEvent(user, event, membership)) {
+    throw await tError("common", "errors.noAccess");
+  }
+  if (await getChargeSettings(eventId)) {
+    throw await tError("budget", "errors.companionsLocked");
+  }
+  return user;
+}
+
+// Insert with the per-host cap — a server-layer guard rail, not a SQL
+// constraint (specs/companions.md §4).
+async function insertCompanion(
+  eventId: string,
+  hostUserId: string,
+  input: { name: string; noAlcohol: boolean; noMeat: boolean }
+) {
+  const name = await parseCompanionName(input.name);
+  const supabase = createServerSupabaseClient();
+  const { count, error: cError } = await supabase
+    .from("event_companions")
+    .select("id", { count: "exact", head: true })
+    .eq("event_id", eventId)
+    .eq("host_user_id", hostUserId);
+  if (cError) throw new Error(`Failed to count companions: ${cError.message}`);
+  if ((count ?? 0) >= MAX_COMPANIONS_PER_HOST) {
+    throw await tError("budget", "errors.companionLimit", {
+      max: MAX_COMPANIONS_PER_HOST,
+    });
+  }
+  const { error } = await supabase.from("event_companions").insert({
+    event_id: eventId,
+    host_user_id: hostUserId,
+    name,
+    no_alcohol: input.noAlcohol,
+    no_meat: input.noMeat,
+  });
+  if (error) throw new Error(`Failed to add companion: ${error.message}`);
+}
+
+async function applyCompanionUpdate(
+  eventId: string,
+  companionId: string,
+  input: { name: string; noAlcohol: boolean; noMeat: boolean }
+) {
+  const supabase = createServerSupabaseClient();
+  const { error } = await supabase
+    .from("event_companions")
+    .update({
+      name: await parseCompanionName(input.name),
+      no_alcohol: input.noAlcohol,
+      no_meat: input.noMeat,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", companionId)
+    .eq("event_id", eventId);
+  if (error) throw new Error(`Failed to update companion: ${error.message}`);
+}
+
+async function deleteCompanionRow(eventId: string, companionId: string) {
+  const supabase = createServerSupabaseClient();
+  const { error } = await supabase
+    .from("event_companions")
+    .delete()
+    .eq("id", companionId)
+    .eq("event_id", eventId);
+  if (error) throw new Error(`Failed to remove companion: ${error.message}`);
+}
+
+export async function addCompanion(
+  eventId: string,
+  input: { name: string; noAlcohol: boolean; noMeat: boolean }
+) {
+  const user = await requireCompanionSelfEdit(eventId);
+  await insertCompanion(eventId, user.id, input);
+  revalidatePath(`/events/${eventId}`);
+}
+
+export async function updateCompanion(
+  eventId: string,
+  companionId: string,
+  input: { name: string; noAlcohol: boolean; noMeat: boolean }
+) {
+  const user = await requireCompanionSelfEdit(eventId);
+  const companion = await requireCompanion(eventId, companionId);
+  if (companion.host_user_id !== user.id) {
+    throw await tError("common", "errors.noAccess");
+  }
+  await applyCompanionUpdate(eventId, companionId, input);
+  revalidatePath(`/events/${eventId}`);
+}
+
+export async function removeCompanion(eventId: string, companionId: string) {
+  const user = await requireCompanionSelfEdit(eventId);
+  const companion = await requireCompanion(eventId, companionId);
+  if (companion.host_user_id !== user.id) {
+    throw await tError("common", "errors.noAccess");
+  }
+  await deleteCompanionRow(eventId, companionId);
+  revalidatePath(`/events/${eventId}`);
+}
+
+// Admin edits compose with active charging exactly like flag edits: the
+// host's unpaid charge is regenerated at the new unit count; a paid charge
+// is never touched (specs/companions.md §6).
+async function regenerateHostChargeIfUnpaid(
+  eventId: string,
+  hostUserId: string
+) {
+  if (!(await getChargeSettings(eventId))) return;
+  const charge = await getLiveCharge(eventId, hostUserId);
+  if (charge && charge.status !== "paid") await regenerateChargeRow(charge);
+}
+
+export async function adminAddCompanion(
+  eventId: string,
+  hostUserId: string,
+  input: { name: string; noAlcohol: boolean; noMeat: boolean }
+) {
+  await requireAdmin();
+  const event = await getEvent(eventId);
+  if (!event) throw await tError("common", "errors.eventNotFound");
+  // The host must be an approved participant (or the implicitly-approved
+  // creator) — companions of non-members must not exist (specs/companions.md §4).
+  if (hostUserId !== event.created_by) {
+    const membership = await getMembership(eventId, hostUserId);
+    if (membership?.status !== "approved") {
+      throw await tError("event", "errors.participantNotFound");
+    }
+  }
+  await insertCompanion(eventId, hostUserId, input);
+  await regenerateHostChargeIfUnpaid(eventId, hostUserId);
+  revalidatePath(`/events/${eventId}`);
+}
+
+export async function adminUpdateCompanion(
+  eventId: string,
+  companionId: string,
+  input: { name: string; noAlcohol: boolean; noMeat: boolean }
+) {
+  await requireAdmin();
+  const companion = await requireCompanion(eventId, companionId);
+  await applyCompanionUpdate(eventId, companionId, input);
+  await regenerateHostChargeIfUnpaid(eventId, companion.host_user_id);
+  revalidatePath(`/events/${eventId}`);
+}
+
+export async function adminRemoveCompanion(
+  eventId: string,
+  companionId: string
+) {
+  await requireAdmin();
+  const companion = await requireCompanion(eventId, companionId);
+  await deleteCompanionRow(eventId, companionId);
+  await regenerateHostChargeIfUnpaid(eventId, companion.host_user_id);
+  revalidatePath(`/events/${eventId}`);
+}
+
 // --- Pix charging (specs/pix-payments.md) ------------------------------------
 
 // Loads a charge scoped to the event, or throws — every admin row action
@@ -589,17 +802,21 @@ export async function activateCharging(
   const { error } = await supabase.from("event_charge_settings").insert(settings);
   if (error) throw new Error(`Failed to activate charging: ${error.message}`);
 
-  // One PSP charge per participant. A paid charge kept from a previous
-  // activation round means that person isn't charged again (§6).
+  // One PSP charge per participant, priced over their units — the host's
+  // own flags plus one unit per companion (specs/companions.md §6). A paid
+  // charge kept from a previous activation round means that person isn't
+  // charged again (§6).
   const participants = await listParticipants(event);
+  const companions = await listEventCompanions(eventId);
   const created: PixCharge[] = [];
   try {
     for (const p of participants) {
       if (await getLiveCharge(eventId, p.userId)) continue;
-      const amount = chargeAmountFor(settings, {
-        no_alcohol: p.noAlcohol,
-        no_meat: p.noMeat,
-      });
+      const amount = chargeAmountFor(
+        settings,
+        { no_alcohol: p.noAlcohol, no_meat: p.noMeat },
+        companionFlagsOf(companions, p.userId)
+      );
       created.push(
         await createChargeForUser(eventId, { id: p.userId, email: p.email }, amount)
       );

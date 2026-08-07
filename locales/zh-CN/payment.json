@@ -65,5 +65,6 @@
     "noCharge": "您在此活动中没有收款",
     "chargeNotFound": "未找到收款",
     "flagsLocked": "收款已开启 — 请联系管理员修改您的偏好"
-  }
+  },
+  "covers": "涵盖：{{names}}"
 }

@@ -11,6 +11,7 @@ import {
   listPendingRequests,
 } from "@/lib/events";
 import { getChargeSettings, listBudgetItems } from "@/lib/budget";
+import { listEventCompanions } from "@/lib/companions";
 import { listEventCharges, type PixChargeWithUser } from "@/lib/charges";
 import { formatDay } from "@/lib/format";
 import { getT } from "@/lib/i18n/server";
@@ -55,12 +56,14 @@ export default async function EventPage({
 
   // Participants feed both the admin list and the budget shares
   // (specs/event-budget.md §5), so every viewer loads them.
-  const [availability, participants, budgetItems, chargeSettings] =
+  const [availability, participants, budgetItems, chargeSettings, companions] =
     await Promise.all([
       listAvailability(id),
       listParticipants(event),
       listBudgetItems(id),
       getChargeSettings(id),
+      // Companions count as billable units in the split (specs/companions.md §5).
+      listEventCompanions(id),
     ]);
   const pendingRequests = user.is_admin ? await listPendingRequests(id) : [];
   // Charges only exist while charging is active (or as kept paid history).
@@ -166,6 +169,7 @@ export default async function EventPage({
               viewerId={user.id}
               isAdmin={user.is_admin}
               participants={participants}
+              companions={companions}
               items={budgetItems}
               chargeSettings={chargeSettings}
               charges={charges}

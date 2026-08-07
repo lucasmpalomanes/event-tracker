@@ -33,8 +33,9 @@ export type PixCharge = {
 const CHARGE_COLUMNS =
   "id, event_id, user_id, txid, psp_charge_id, amount_cents, brcode, status, paid_at, paid_manually, refunded_at, expires_at";
 
-// A charge's amount at creation time (specs/pix-payments.md §4).
-export function chargeAmountFor(
+// One unit's price — a participant or a companion (specs/pix-payments.md §4,
+// as amended by specs/companions.md §6).
+export function unitAmountFor(
   settings: ChargeSettings,
   flags: ConsumptionFlags
 ): number {
@@ -42,6 +43,19 @@ export function chargeAmountFor(
     settings.base_price_cents -
     (flags.no_alcohol ? settings.no_alcohol_deduction_cents : 0) -
     (flags.no_meat ? settings.no_meat_deduction_cents : 0)
+  );
+}
+
+// A charge's amount at creation time: the host's own unit plus one unit per
+// companion they bring (specs/companions.md §6).
+export function chargeAmountFor(
+  settings: ChargeSettings,
+  flags: ConsumptionFlags,
+  companionFlags: ConsumptionFlags[]
+): number {
+  return companionFlags.reduce(
+    (sum, f) => sum + unitAmountFor(settings, f),
+    unitAmountFor(settings, flags)
   );
 }
 
@@ -187,14 +201,16 @@ export async function cancelUnpaidLiveCharge(
   if (charge && charge.status !== "paid") await cancelChargeRow(charge);
 }
 
-// Settings + the user's flags + email — everything needed to price and
-// create a charge for one user. Settings null = charging inactive.
+// Settings + the user's flags + email + their companions' flags — everything
+// needed to price and create a charge for one user. Settings null = charging
+// inactive.
 async function loadChargeInputs(eventId: string, userId: string) {
   const supabase = createServerSupabaseClient();
   const [
     { data: settings, error: sError },
     { data: membership, error: mError },
     { data: user, error: uError },
+    { data: companions, error: cError },
   ] = await Promise.all([
     supabase
       .from("event_charge_settings")
@@ -210,10 +226,17 @@ async function loadChargeInputs(eventId: string, userId: string) {
       .eq("user_id", userId)
       .maybeSingle(),
     supabase.from("users").select("id, email").eq("id", userId).single(),
+    // The host pays for their companions in the same charge
+    // (specs/companions.md §6).
+    supabase
+      .from("event_companions")
+      .select("no_alcohol, no_meat")
+      .eq("event_id", eventId)
+      .eq("host_user_id", userId),
   ]);
-  if (sError || mError || uError) {
+  if (sError || mError || uError || cError) {
     throw new Error(
-      `Failed to load charge inputs: ${(sError ?? mError ?? uError)!.message}`
+      `Failed to load charge inputs: ${(sError ?? mError ?? uError ?? cError)!.message}`
     );
   }
   return {
@@ -223,6 +246,7 @@ async function loadChargeInputs(eventId: string, userId: string) {
       no_alcohol: membership?.no_alcohol ?? false,
       no_meat: membership?.no_meat ?? false,
     },
+    companionFlags: (companions ?? []) as ConsumptionFlags[],
   };
 }
 
@@ -234,19 +258,27 @@ export async function ensureChargeForUser(
   eventId: string,
   userId: string
 ): Promise<void> {
-  const { settings, user, flags } = await loadChargeInputs(eventId, userId);
+  const { settings, user, flags, companionFlags } = await loadChargeInputs(
+    eventId,
+    userId
+  );
   if (!settings) return;
   if (await getLiveCharge(eventId, userId)) return;
-  await createChargeForUser(eventId, user, chargeAmountFor(settings, flags));
+  await createChargeForUser(
+    eventId,
+    user,
+    chargeAmountFor(settings, flags, companionFlags)
+  );
 }
 
 // Repricing = regeneration (specs/pix-payments.md §9): cancel the unpaid
-// charge, create a fresh one (new txid) at the current settings + flags.
+// charge, create a fresh one (new txid) at the current settings + flags +
+// companions (specs/companions.md §6).
 export async function regenerateChargeRow(charge: PixCharge): Promise<void> {
   if (charge.status === "paid" || charge.status === "refunded") {
     throw new Error("A paid charge is never regenerated");
   }
-  const { settings, user, flags } = await loadChargeInputs(
+  const { settings, user, flags, companionFlags } = await loadChargeInputs(
     charge.event_id,
     charge.user_id
   );
@@ -255,6 +287,6 @@ export async function regenerateChargeRow(charge: PixCharge): Promise<void> {
   await createChargeForUser(
     charge.event_id,
     user,
-    chargeAmountFor(settings, flags)
+    chargeAmountFor(settings, flags, companionFlags)
   );
 }

@@ -70,6 +70,10 @@ Items are ordered by `created_at`. No soft delete.
 
 ## 5. Computation
 
+> *(Amended 2026-08-07 by [`companions.md`](./companions.md) §5: the split now
+> computes over **billable units** — approved participants **plus their
+> companions**. The groups below grow accordingly; formulas are unchanged.)*
+
 All figures derive live from the current **approved** participants (including
 the event creator) and their membership flags. Nothing here is persisted —
 persistence happens only when the admin activates charging, which snapshots
@@ -133,6 +137,10 @@ right tab. Both tabs render for every event status — budgeting can start
 while voting is still open.
 
 ### 6.2 Budget tab — participant view
+
+> *(Amended 2026-08-07 by [`companions.md`](./companions.md) §7.1: the "your
+> share" card gains a **companions editor** below the flags editor, and its
+> headline becomes the host's total with a per-person breakdown.)*
 
 - **Items table** (read-only): name, amount, who splits it ("Everyone" /
   "Drinkers" / "Meat-eaters"), with the group sizes shown (e.g.

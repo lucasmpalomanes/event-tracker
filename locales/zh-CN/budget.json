@@ -63,11 +63,37 @@
     "title": "开启收款？",
     "description_other": "这会为 {{count}} 位已批准的参与者各创建一笔 Pix 收款。价格将被冻结 — 之后修改价格需要停用并重新开启。",
     "confirm": "开启",
-    "failed": "开启失败"
+    "failed": "开启失败",
+    "unitsNote": "收款共涵盖 {{count}} 人（含同伴）。"
   },
   "errors": {
     "nameRequired": "项目名称为必填项",
     "amountPositive": "项目金额必须为正数",
-    "invalidExemption": "免摊组无效"
+    "invalidExemption": "免摊组无效",
+    "companionNameRequired": "同伴姓名为必填项",
+    "companionNameTooLong": "同伴姓名最多 {{max}} 个字符",
+    "companionNotFound": "未找到该同伴",
+    "companionLimit": "每人最多 {{max}} 位同伴",
+    "companionsLocked": "收款已激活——请联系组织者修改您的同伴。"
+  },
+  "you": "你",
+  "yourShareWithCompanions_other": "你的份额 + {{count}} 位同伴",
+  "unitsTotal_other": "{{count}} 人",
+  "companionsCount_other": "{{count}} 位同伴",
+  "marker": {
+    "noAlcohol": "不饮酒",
+    "noMeat": "不吃肉"
+  },
+  "companions": {
+    "title": "同伴",
+    "namePlaceholder": "同伴姓名",
+    "add": "添加同伴",
+    "adding": "正在添加…",
+    "remove": "移除{{name}}",
+    "removeLabel": "移除",
+    "noAlcohol": "不饮酒",
+    "noMeat": "不吃肉",
+    "none": "暂无同伴。",
+    "regenNote": "改动会按新金额重新生成此人未支付的收款；已支付的收款不受影响。"
   }
 }
