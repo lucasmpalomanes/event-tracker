@@ -221,12 +221,19 @@ this page; anyone else is redirected back to the list with their request status.
   remove individual votes; see [§5.3](#53-participant--vote-removal-admin).
 - Close voting (reversible — a `closed` event can be reopened), and finalize a
   specific date (typically the top-ranked one).
-- Note: **finalizing is one-way** in v1 — a `finalized` event cannot be
-  re-opened.
+- ~~Note: **finalizing is one-way** in v1 — a `finalized` event cannot be
+  re-opened.~~ *(Revised 2026-10-03 by
+  [`reopen-finalized.md`](./reopen-finalized.md) §4: a `finalized` event **can**
+  be reopened, provided it has no active charging and no `paid`/unsettled Pix
+  charge. Finalizing's confirmation copy changes accordingly — it is no longer
+  "cannot be undone".)*
 - Closing and finalizing both ask for a **confirmation** before firing
   *(added 2026-07-05)*: they end live voting, so a stray click shouldn't do
   it. Closing's confirmation notes voting can be reopened; finalizing's says
-  it cannot be undone. Reopening needs no confirmation.
+  it cannot be undone. Reopening needs no confirmation. *(Amended 2026-10-03 by
+  [`reopen-finalized.md`](./reopen-finalized.md) §6: reopening a **finalized**
+  event does confirm — it discards the chosen date; `closed → open` stays
+  unconfirmed.)*
 
 ### 5.3 Participant & vote removal (admin)
 
@@ -303,8 +310,12 @@ there, or delete stray/mistaken votes without kicking anyone.
 - **Event visibility:** all events are visible to every logged-in user; an admin
   approves who may *enter* each event (see `event_memberships`, [§3](#3-roles--permissions), [§5](#5-screens)).
 - **Re-opening:** a `closed` event can be reopened by an admin (closed ↔ open);
-  a `finalized` event cannot. *(Revised 2026-07-04 — closing was originally
-  one-way.)*
+  a `finalized` event can be reopened too, **unless it has charge obligations**
+  — active charging, or a `paid` charge that was never refunded. *(Revised
+  2026-07-04 — closing was originally one-way. Revised again 2026-10-03 by
+  [`reopen-finalized.md`](./reopen-finalized.md) — finalizing was one-way until
+  then, a rule that carried no rationale; the real constraint is money, so that
+  is what is checked. Full conditions in that spec's §4.)*
 - **Window size cap:** the date window may span at most **6 months**.
 - **Holiday source:** Brazilian national holidays are **computed in-app** (fixed
   dates + Easter-derived movable feasts), no external API.

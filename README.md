@@ -64,6 +64,9 @@ update users set is_admin = true where email = 'you@example.com';
 | `specs/shadcn-refactor.md` | UI refactor spec — migrate components to shadcn/ui |
 | `specs/pix-payments.md` | Pix payments spec — per-participant charges on finalized events |
 | `specs/event-budget.md` | Budget tab spec — itemized costs, per-person shares, feeds Pix pricing |
+| `specs/companions.md` | Companions spec — account-less guests attached to a participant |
+| `specs/i18n.md` | i18n spec — i18next, four languages, locale-neutral URLs |
+| `specs/reopen-finalized.md` | Reopening finalized events — allowed unless there are charge obligations |
 | `supabase/schema.sql` | Database schema (run in Supabase SQL editor) |
 | `proxy.ts` | Auth0 session handling (Next 16's renamed middleware) |
 | `lib/dal.ts` | Auth gate: Auth0 session → Supabase user sync |
