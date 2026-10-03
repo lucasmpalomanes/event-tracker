@@ -37,6 +37,14 @@
     "pending": "Encerrando…"
   },
   "reopenVoting": "Reabrir votação",
+  "reopenFinalized": {
+    "label": "Reabrir votação",
+    "title": "Reabrir votação?",
+    "description": "Reabrir a votação de \"{{title}}\"? A data escolhida será descartada e os participantes poderão alterar a disponibilidade novamente. Os votos são mantidos. Você precisará finalizar uma data outra vez.",
+    "pending": "Reabrindo…",
+    "blockedCharging": "Desative a cobrança para poder reabrir a votação.",
+    "blockedPaid": "Há pagamentos recebidos que ainda não foram devolvidos."
+  },
   "deleteEvent": {
     "label": "Excluir evento",
     "title": "Excluir evento?",
@@ -61,7 +69,7 @@
   "finalize": {
     "pick": "Escolher",
     "title": "Finalizar esta data?",
-    "description": "Finalizar {{date}} para \"{{title}}\"? A votação termina e o evento não pode ser reaberto. Isso não pode ser desfeito.",
+    "description": "Finalizar {{date}} para \"{{title}}\"? A votação termina e os participantes não poderão mais alterar a disponibilidade. Você pode reabrir a votação depois, desde que ainda não tenha ativado a cobrança.",
     "confirm": "Finalizar",
     "tooltip": "Finalizar esta data"
   },
@@ -90,6 +98,9 @@
     "alreadyFinalized": "Já finalizado",
     "finalizedOutsideWindow": "A data finalizada deve estar dentro da janela do evento",
     "participantNotFound": "Participante não encontrado",
-    "creatorNotRemovable": "O criador do evento não pode ser removido"
+    "creatorNotRemovable": "O criador do evento não pode ser removido",
+    "notReopenable": "Este evento não pode ser reaberto",
+    "reopenBlockedCharging": "Desative a cobrança antes de reabrir a votação",
+    "reopenBlockedPaid": "Há pagamentos recebidos que ainda não foram devolvidos"
   }
 }

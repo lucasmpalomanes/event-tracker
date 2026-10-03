@@ -8,6 +8,7 @@
     "title": "Desativar cobrança?",
     "description": "Toda cobrança não paga é cancelada — os códigos Pix param de funcionar. Cobranças pagas são mantidas; reembolsos continuam manuais. Reativar depois cria novas cobranças para quem ainda não pagou."
   },
+  "orphanCharges": "Há cobranças não pagas de uma ativação anterior. Desative a cobrança para cancelá-las.",
   "drift": "O orçamento mudou desde a ativação — desative e reative a cobrança para reprecificar.",
   "items": "Itens do orçamento",
   "total": "Total: {{amount}}",

@@ -136,6 +136,30 @@ create table if not exists event_charge_settings (
            - no_meat_deduction_cents > 0)
 );
 
+-- Charging exists only for finalized events (specs/pix-payments.md §6). With
+-- finalized events now reopenable (specs/reopen-finalized.md §4), that rule
+-- also closes the reverse race: the reopen action checks for settings and then
+-- flips the status, so an activation landing in between would leave an `open`
+-- event with live Pix codes. Enforcing it here makes that unrepresentable
+-- rather than merely unlikely. Deletes are deliberately not covered —
+-- deactivating must always work.
+create or replace function check_charging_event_finalized()
+returns trigger as $$
+begin
+  if not exists (
+    select 1 from events where id = new.event_id and status = 'finalized'
+  ) then
+    raise exception 'charging requires event % to be finalized', new.event_id;
+  end if;
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists charge_settings_event_finalized on event_charge_settings;
+create trigger charge_settings_event_finalized
+  before insert or update on event_charge_settings
+  for each row execute function check_charging_event_finalized();
+
 -- event_companions (specs/companions.md §4) -----------------------------------
 -- Guests without accounts, attached to the participant who brought them
 -- (and pays for them). Keyed on the user, not the membership row, so the

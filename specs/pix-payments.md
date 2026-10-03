@@ -230,6 +230,17 @@ in `.env.local`, production credentials on Vercel.
 **Only finalized events.** Charging can only be activated on a `finalized`
 event — collecting money only makes sense once the date is set.
 
+> *(Amended 2026-10-03 by [`reopen-finalized.md`](./reopen-finalized.md): this
+> rule gains a **converse**. A `finalized` event can now be sent back to
+> `open`, and charge state is what gates it — reopening requires no
+> `event_charge_settings` row **and** no `pix_charges` row in `pending`, `paid`
+> or `expired`. Note that `paid` charges survive deactivation (see
+> **Deactivation** below), so "charging deactivated" alone is not enough: the
+> admin must refund and mark those charges `refunded` first. `canceled` and
+> `refunded` history never blocks. That spec also calls for a database trigger
+> keeping `event_charge_settings` rows exclusive to `finalized` events, closing
+> the activate-vs-reopen race.)*
+
 **Participant removal with an active charge.** Removal is allowed on any
 event status, including `finalized` (`spec.md` §5.3) — someone can change
 their mind about attending after seeing the chosen date. When the admin

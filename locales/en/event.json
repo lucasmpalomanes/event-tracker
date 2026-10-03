@@ -37,6 +37,14 @@
     "pending": "Closing…"
   },
   "reopenVoting": "Reopen voting",
+  "reopenFinalized": {
+    "label": "Reopen voting",
+    "title": "Reopen voting?",
+    "description": "Reopen voting for \"{{title}}\"? The chosen date will be discarded and participants can change their availability again. Votes are kept. You'll need to finalize a date once more.",
+    "pending": "Reopening…",
+    "blockedCharging": "Deactivate charging to reopen voting.",
+    "blockedPaid": "Some payments were received and haven't been refunded yet."
+  },
   "deleteEvent": {
     "label": "Delete event",
     "title": "Delete event?",
@@ -61,7 +69,7 @@
   "finalize": {
     "pick": "Pick",
     "title": "Finalize this date?",
-    "description": "Finalize {{date}} for \"{{title}}\"? Voting ends and the event cannot be reopened. This cannot be undone.",
+    "description": "Finalize {{date}} for \"{{title}}\"? Voting ends and participants can no longer change their availability. You can reopen voting later, as long as you haven't activated charging.",
     "confirm": "Finalize",
     "tooltip": "Finalize this date"
   },
@@ -90,6 +98,9 @@
     "alreadyFinalized": "Already finalized",
     "finalizedOutsideWindow": "Finalized date must be inside the event window",
     "participantNotFound": "Participant not found",
-    "creatorNotRemovable": "The event's creator cannot be removed"
+    "creatorNotRemovable": "The event's creator cannot be removed",
+    "notReopenable": "This event cannot be reopened",
+    "reopenBlockedCharging": "Deactivate charging before reopening voting",
+    "reopenBlockedPaid": "Some payments were received and haven't been refunded yet"
   }
 }

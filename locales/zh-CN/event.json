@@ -36,6 +36,14 @@
     "pending": "正在结束…"
   },
   "reopenVoting": "重新开放投票",
+  "reopenFinalized": {
+    "label": "重新开放投票",
+    "title": "重新开放投票？",
+    "description": "重新开放「{{title}}」的投票？已确定的日期将被放弃，参与者可以再次更改空闲日期。投票记录会保留。您需要重新确定一个日期。",
+    "pending": "正在重新开放…",
+    "blockedCharging": "请先停用收款，才能重新开放投票。",
+    "blockedPaid": "有已收到的款项尚未退还。"
+  },
   "deleteEvent": {
     "label": "删除活动",
     "title": "删除活动？",
@@ -59,7 +67,7 @@
   "finalize": {
     "pick": "选定",
     "title": "确定这个日期？",
-    "description": "将「{{title}}」的日期确定为 {{date}}？投票将结束，活动无法重新开放。此操作无法撤销。",
+    "description": "将「{{title}}」的日期确定为 {{date}}？投票将结束，参与者将无法再更改空闲日期。只要尚未启用收款，您以后仍可重新开放投票。",
     "confirm": "确定",
     "tooltip": "确定这个日期"
   },
@@ -88,6 +96,9 @@
     "alreadyFinalized": "日期已确定",
     "finalizedOutsideWindow": "确定的日期必须在活动日期范围内",
     "participantNotFound": "未找到参与者",
-    "creatorNotRemovable": "无法移除活动创建者"
+    "creatorNotRemovable": "无法移除活动创建者",
+    "notReopenable": "该活动无法重新开放",
+    "reopenBlockedCharging": "请先停用收款，再重新开放投票",
+    "reopenBlockedPaid": "有已收到的款项尚未退还"
   }
 }
