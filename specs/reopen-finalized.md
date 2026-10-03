@@ -198,14 +198,21 @@ an event that has none. The old value is **discarded** — see
 
 **Consequences that follow from existing rules** (no new behavior needed):
 
-- Participants regain the right to edit their own consumption flags — that
-  right is gated on charging being inactive (`pix-payments.md` §4, *Editing
-  window*), which [§4](#4-eligibility) already guarantees.
+- Participants can edit their own consumption flags and companions both before
+  and after the reopen, unchanged. That window is gated on **charging being
+  inactive**, not on the event's status (`pix-payments.md` §4, *Editing
+  window*), and [§4](#4-eligibility) requires charging to be off for the
+  reopen to be allowed in the first place — so the right was already open and
+  the transition does not touch it.
 - The Budget tab's "Ativar cobrança" disappears and is replaced by the existing
   "finalize a data primeiro" message (`event-budget.md` §6), because the event
-  is no longer `finalized`.
-- Budget items and the computed split stay visible and editable; only charging
-  is gated.
+  is no longer `finalized`. This is the **only** status-dependent branch in the
+  tab.
+- Budget items, companions and the computed split stay visible and editable.
+  Nothing there is stored pre-computed — the split is derived per render — so
+  there are no stale numbers to invalidate. The only snapshotted amounts live
+  in `event_charge_settings` and `pix_charges`, which a reopenable event cannot
+  have.
 
 ## 6. Screens
 
