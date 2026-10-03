@@ -135,6 +135,12 @@ export async function BudgetTab({
     alcoholCents: shares.alcoholShare,
     meatCents: shares.meatShare,
   };
+  // Charging is off, yet unpaid charges linger — a broken invariant that
+  // otherwise has no UI to clear it (specs/reopen-finalized.md §4).
+  const orphanCharges =
+    chargeSettings === null &&
+    charges.some((c) => c.status === "pending" || c.status === "expired");
+
   // Never reprice silently — only surface the drift (specs/event-budget.md §6.3).
   const drift =
     chargeSettings !== null &&
@@ -180,6 +186,26 @@ export async function BudgetTab({
             <p className="text-sm text-muted-foreground">
               {t("finalizeFirst")}
             </p>
+          )}
+          {/* Unpaid charges with no settings row shouldn't exist, but if they
+              do, the payment board and its deactivate control are both hidden
+              and the event can never reopen. Surface the one call that clears
+              them (specs/reopen-finalized.md §4). */}
+          {orphanCharges && (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-warning-foreground">
+                {t("orphanCharges")}
+              </p>
+              <ConfirmActionButton
+                action={deactivateCharging.bind(null, event.id)}
+                title={t("deactivate.title")}
+                description={t("deactivate.description")}
+                confirmLabel={t("deactivate.label")}
+                className="self-start"
+              >
+                {t("deactivate.label")}
+              </ConfirmActionButton>
+            </div>
           )}
         </Card>
       )}

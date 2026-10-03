@@ -8,6 +8,7 @@
     "title": "Deaktivirati naplatu?",
     "description": "Sve neplaćene naplate se otkazuju — Pix kodovi prestaju raditi. Plaćene naplate se čuvaju; povrati ostaju ručni. Kasnija reaktivacija kreira nove naplate za sve koji nisu platili."
   },
+  "orphanCharges": "Postoje neplaćene naplate zaostale od prethodne aktivacije. Deaktivirajte naplatu da ih otkažete.",
   "drift": "Budžet se promijenio od aktivacije — deaktivirajte i ponovo aktivirajte naplatu za novu cijenu.",
   "items": "Stavke budžeta",
   "total": "Ukupno: {{amount}}",

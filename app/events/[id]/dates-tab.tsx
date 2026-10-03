@@ -1,4 +1,5 @@
 import type { AvailabilityEntry, EventRow, Participant, PendingRequest } from "@/lib/events";
+import type { ReopenBlocker } from "@/lib/charges";
 import { holidaysInRange } from "@/lib/holidays";
 import { formatDay, formatMonthYear } from "@/lib/format";
 import { getT } from "@/lib/i18n/server";
@@ -84,6 +85,7 @@ export async function DatesTab({
   pendingRequests,
   participants,
   availability,
+  reopenBlockedBy,
 }: {
   event: EventRow;
   viewerId: string;
@@ -91,6 +93,8 @@ export async function DatesTab({
   pendingRequests: PendingRequest[];
   participants: Participant[];
   availability: AvailabilityEntry[];
+  // What stops a finalized event from reopening (specs/reopen-finalized.md §4).
+  reopenBlockedBy: ReopenBlocker | null;
 }) {
   const { t, locale } = await getT("event");
   const { t: tCommon } = await getT("common");
@@ -196,6 +200,33 @@ export async function DatesTab({
                       {t("reopenVoting")}
                     </Button>
                   </form>
+                )}
+                {/* A finalized event reopens too, unless money is in flight
+                    (specs/reopen-finalized.md §4). Unlike closed → open this
+                    one confirms — it discards the chosen date — and when
+                    blocked it stays visible with the reason instead of
+                    vanishing (§6). */}
+                {event.status === "finalized" && (
+                  <ConfirmActionButton
+                    action={reopenVoting.bind(null, event.id)}
+                    title={t("reopenFinalized.title")}
+                    description={t("reopenFinalized.description", {
+                      title: event.title,
+                    })}
+                    confirmLabel={t("reopenFinalized.label")}
+                    confirmVariant="default"
+                    pendingLabel={t("reopenFinalized.pending")}
+                    disabled={reopenBlockedBy !== null}
+                    tooltip={
+                      reopenBlockedBy === "charging"
+                        ? t("reopenFinalized.blockedCharging")
+                        : reopenBlockedBy === "unrefunded"
+                          ? t("reopenFinalized.blockedPaid")
+                          : undefined
+                    }
+                  >
+                    {t("reopenFinalized.label")}
+                  </ConfirmActionButton>
                 )}
                 <ConfirmActionButton
                   action={deleteEvent.bind(null, event.id)}

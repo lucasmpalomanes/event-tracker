@@ -16,8 +16,10 @@ import {
   createChargeForUser,
   ensureChargeForUser,
   getLiveCharge,
+  listChargeStatuses,
   reconcileChargeWithPsp,
   regenerateChargeRow,
+  reopenBlocker,
   type PixCharge,
 } from "@/lib/charges";
 import { getChargeSettings } from "@/lib/budget";
@@ -156,16 +158,73 @@ export async function closeVoting(eventId: string) {
   revalidatePath("/");
 }
 
+// `closed` reopens unconditionally; `finalized` only without charge
+// obligations (specs/reopen-finalized.md §4). Fails loudly throughout — the
+// old version ended on a bare `.eq("status", "closed")` whose zero-row write
+// reported success (§7).
 export async function reopenVoting(eventId: string) {
   await requireAdmin();
+
+  const event = await getEvent(eventId);
+  if (!event) throw await tError("common", "errors.eventNotFound");
+  if (event.status === "open") {
+    throw await tError("event", "errors.notReopenable");
+  }
+
+  if (event.status === "finalized") {
+    const [settings, charges] = await Promise.all([
+      getChargeSettings(eventId),
+      listChargeStatuses(eventId),
+    ]);
+    const blocker = reopenBlocker(settings, charges);
+    if (blocker) {
+      throw await tError(
+        "event",
+        blocker === "charging"
+          ? "errors.reopenBlockedCharging"
+          : "errors.reopenBlockedPaid"
+      );
+    }
+  }
+
   const supabase = createServerSupabaseClient();
-  // Only closed events can be reopened; finalized stays final (specs/spec.md §8).
-  const { error } = await supabase
+  // The chosen date goes with the status: an `open` event carrying a
+  // finalized_date contradicts the data model (specs/reopen-finalized.md §5).
+  // Conditional on the status just read, so a concurrent close/finalize isn't
+  // overwritten blind.
+  const { data: reopened, error } = await supabase
     .from("events")
-    .update({ status: "open", updated_at: new Date().toISOString() })
+    .update({
+      status: "open",
+      finalized_date: null,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", eventId)
-    .eq("status", "closed");
+    .eq("status", event.status)
+    .select("id");
   if (error) throw new Error(`Failed to reopen voting: ${error.message}`);
+  if (!reopened?.length) throw await tError("event", "errors.notReopenable");
+
+  // Activation could have landed between the check and the write, leaving an
+  // `open` event with live Pix codes. The schema trigger makes that
+  // impossible; this is the belt-and-braces half (specs/reopen-finalized.md §7).
+  if (event.status === "finalized" && (await getChargeSettings(eventId))) {
+    const { error: rollbackError } = await supabase
+      .from("events")
+      .update({
+        status: "finalized",
+        finalized_date: event.finalized_date,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", eventId);
+    if (rollbackError) {
+      throw new Error(
+        `Reopened an event that got charging activated concurrently, and the rollback failed: ${rollbackError.message}`
+      );
+    }
+    throw await tError("event", "errors.reopenBlockedCharging");
+  }
+
   revalidatePath(`/events/${eventId}`);
   revalidatePath("/");
 }

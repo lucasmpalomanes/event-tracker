@@ -8,6 +8,7 @@
     "title": "Deactivate charging?",
     "description": "Every unpaid charge is canceled — the Pix codes stop working. Paid charges are kept; refunds stay manual. Reactivating later creates fresh charges for anyone who hasn't paid."
   },
+  "orphanCharges": "Unpaid charges are left over from an earlier activation. Deactivate charging to cancel them.",
   "drift": "The budget changed since activation — deactivate and reactivate charging to reprice.",
   "items": "Budget items",
   "total": "Total: {{amount}}",

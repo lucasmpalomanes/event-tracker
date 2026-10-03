@@ -103,6 +103,44 @@ export async function listEventCharges(
   });
 }
 
+// Reopening a finalized event is gated on charge obligations
+// (specs/reopen-finalized.md §4): no active charging, and no charge left to
+// honor. `canceled`/`refunded` history never blocks — no money moved, or it
+// moved back.
+export type ReopenBlocker = "charging" | "unrefunded";
+
+export function reopenBlocker(
+  settings: ChargeSettings | null,
+  charges: Pick<PixCharge, "status">[]
+): ReopenBlocker | null {
+  // Active charging wins when several apply: deactivating is the first step
+  // out either way (specs/reopen-finalized.md §6).
+  if (settings) return "charging";
+  // Deactivation cancels these, so an unpaid row with no settings means the
+  // invariant already broke — refuse rather than proceed. Same fix as above,
+  // hence the same blocker (specs/reopen-finalized.md §4).
+  if (charges.some((c) => c.status === "pending" || c.status === "expired")) {
+    return "charging";
+  }
+  if (charges.some((c) => c.status === "paid")) return "unrefunded";
+  return null;
+}
+
+// Statuses alone — all the reopen gate needs (specs/reopen-finalized.md §7).
+export async function listChargeStatuses(
+  eventId: string
+): Promise<Pick<PixCharge, "status">[]> {
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("pix_charges")
+    .select("status")
+    .eq("event_id", eventId);
+  if (error) {
+    throw new Error(`Failed to load charge statuses: ${error.message}`);
+  }
+  return (data ?? []) as Pick<PixCharge, "status">[];
+}
+
 // The one live charge (unique partial index) for a user, if any.
 export async function getLiveCharge(
   eventId: string,

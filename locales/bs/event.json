@@ -38,6 +38,14 @@
     "pending": "Zatvaranje…"
   },
   "reopenVoting": "Ponovo otvori glasanje",
+  "reopenFinalized": {
+    "label": "Ponovo otvori glasanje",
+    "title": "Ponovo otvoriti glasanje?",
+    "description": "Ponovo otvoriti glasanje za \"{{title}}\"? Izabrani datum će biti odbačen i učesnici će moći ponovo mijenjati svoju dostupnost. Glasovi se čuvaju. Morat ćete ponovo finalizirati datum.",
+    "pending": "Ponovno otvaranje…",
+    "blockedCharging": "Deaktivirajte naplatu da biste ponovo otvorili glasanje.",
+    "blockedPaid": "Postoje primljene uplate koje još nisu vraćene."
+  },
   "deleteEvent": {
     "label": "Obriši događaj",
     "title": "Obrisati događaj?",
@@ -63,7 +71,7 @@
   "finalize": {
     "pick": "Izaberi",
     "title": "Finalizirati ovaj datum?",
-    "description": "Finalizirati {{date}} za \"{{title}}\"? Glasanje se završava i događaj se ne može ponovo otvoriti. Ovo se ne može poništiti.",
+    "description": "Finalizirati {{date}} za \"{{title}}\"? Glasanje se završava i učesnici više neće moći mijenjati svoju dostupnost. Glasanje možete ponovo otvoriti kasnije, ako naplata još nije aktivirana.",
     "confirm": "Finaliziraj",
     "tooltip": "Finaliziraj ovaj datum"
   },
@@ -92,6 +100,9 @@
     "alreadyFinalized": "Već finalizirano",
     "finalizedOutsideWindow": "Finalizirani datum mora biti unutar perioda događaja",
     "participantNotFound": "Učesnik nije pronađen",
-    "creatorNotRemovable": "Kreator događaja ne može biti uklonjen"
+    "creatorNotRemovable": "Kreator događaja ne može biti uklonjen",
+    "notReopenable": "Ovaj događaj se ne može ponovo otvoriti",
+    "reopenBlockedCharging": "Deaktivirajte naplatu prije ponovnog otvaranja glasanja",
+    "reopenBlockedPaid": "Postoje primljene uplate koje još nisu vraćene"
   }
 }

@@ -12,7 +12,11 @@ import {
 } from "@/lib/events";
 import { getChargeSettings, listBudgetItems } from "@/lib/budget";
 import { listEventCompanions } from "@/lib/companions";
-import { listEventCharges, type PixChargeWithUser } from "@/lib/charges";
+import {
+  listEventCharges,
+  reopenBlocker,
+  type PixChargeWithUser,
+} from "@/lib/charges";
 import { formatDay } from "@/lib/format";
 import { getT } from "@/lib/i18n/server";
 import { updateEventDetails } from "@/app/actions";
@@ -66,10 +70,12 @@ export default async function EventPage({
       listEventCompanions(id),
     ]);
   const pendingRequests = user.is_admin ? await listPendingRequests(id) : [];
-  // Charges only exist while charging is active (or as kept paid history).
-  const charges: PixChargeWithUser[] = chargeSettings
-    ? await listEventCharges(id)
-    : [];
+  // Loaded regardless of charging being active: `paid` rows outlive
+  // deactivation, and the reopen gate reads exactly that case — charges
+  // standing with no settings row (specs/reopen-finalized.md §4).
+  const charges: PixChargeWithUser[] = await listEventCharges(id);
+  // What blocks sending a finalized event back to `open`, if anything.
+  const blocker = reopenBlocker(chargeSettings, charges);
 
   return (
     <div className="flex flex-col flex-1">
@@ -161,6 +167,7 @@ export default async function EventPage({
               pendingRequests={pendingRequests}
               participants={participants}
               availability={availability}
+              reopenBlockedBy={blocker}
             />
           }
           budget={
