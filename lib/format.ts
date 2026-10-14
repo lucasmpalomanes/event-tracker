@@ -22,6 +22,17 @@ export function formatDay(day: string, locale: Locale): string {
   }).format(new Date(`${day}T00:00:00Z`));
 }
 
+// Timestamp → short date + time in the active locale. Pinned to São Paulo
+// time rather than the server's zone (this renders on the server, usually
+// UTC), so every viewer sees the same wall-clock time for the group.
+export function formatDateTime(iso: string, locale: Locale): string {
+  return new Intl.DateTimeFormat(locale, {
+    timeZone: "America/Sao_Paulo",
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(iso));
+}
+
 // Calendar month heading: "julho de 2026" / "July 2026" / "2026年7月".
 // `month` is 1-based.
 export function formatMonthYear(

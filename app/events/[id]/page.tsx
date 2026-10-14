@@ -166,6 +166,7 @@ export default async function EventPage({
               isAdmin={user.is_admin}
               pendingRequests={pendingRequests}
               participants={participants}
+              companions={companions}
               availability={availability}
               reopenBlockedBy={blocker}
             />

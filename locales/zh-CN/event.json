@@ -73,6 +73,10 @@
   },
   "participants": "参与者",
   "creator": "（创建者）",
+  "participantCompanions_zero": "无同伴",
+  "lastVote": "最近投票：{{date}}",
+  "neverVoted": "从未投票",
+  "participantCompanions_other": "{{count}} 位同伴",
   "clearVotes": {
     "label": "清除投票",
     "title": "清除投票？",
