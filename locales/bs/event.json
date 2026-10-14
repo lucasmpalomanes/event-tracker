@@ -80,6 +80,8 @@
   "participantCompanions_zero": "Bez pratilaca",
   "participantCompanions_one": "{{count}} pratilac",
   "participantCompanions_few": "{{count}} pratioca",
+  "lastVote": "Posljednji glas: {{date}}",
+  "neverVoted": "Nikad nije glasao/la",
   "participantCompanions_other": "{{count}} pratilaca",
   "clearVotes": {
     "label": "Obriši glasove",

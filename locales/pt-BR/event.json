@@ -78,6 +78,8 @@
   "participantCompanions_zero": "Sem acompanhantes",
   "participantCompanions_one": "{{count}} acompanhante",
   "participantCompanions_other": "{{count}} acompanhantes",
+  "lastVote": "Último voto: {{date}}",
+  "neverVoted": "Nunca votou",
   "clearVotes": {
     "label": "Limpar votos",
     "title": "Limpar votos?",

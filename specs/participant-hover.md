@@ -1,6 +1,6 @@
 # Participant Details on Hover — Specification
 
-**Status:** Draft v1
+**Status:** Draft v2
 **Last updated:** 2026-10-13
 **Amends:**
 - [`spec.md`](./spec.md) §5.2 — the admin participant list gains a hover/focus
@@ -18,26 +18,32 @@ there:
 - **Who this is, exactly.** Names are free text from Auth0 and collide
   ("Lucas", "Lucas M."); the email is the only stable identifier, and it is
   hidden as soon as the user has a name.
+- **Whether they are still around.** There is no "last activity" anywhere;
+  an admin chasing votes before closing has to guess who has gone quiet.
 - **How many people they bring.** Companion counts live only in the Budget
   tab's split ([`companions.md`](./companions.md) §7.2). When deciding whether
   to remove a participant, the admin has to switch tabs to see that removing
   them also removes N companions (`companions.md` §6, cascade).
 
-Both fit in a tooltip on the participant's name — no layout change to a list
+All three fit in a tooltip on the participant's name — no layout change to a list
 that already wraps on mobile.
 
 ## 2. Goals & non-goals
 
 ### Goals
 - Hovering (or keyboard-focusing) a participant's name in the admin list shows
-  their **email** and their **companion count**.
+  their **email**, their **companion count** and the **date of their latest
+  vote** (an approximation of last activity, §4).
 - Works for every row, including the creator's.
-- No new queries: both values are already loaded by the event page.
+- No new queries: every value comes from data the event page already loads
+  (one extra column on an existing select).
 
 ### Non-goals (this version)
 - Listing companion **names** or flags in the tooltip — that is the Budget
   tab's job.
 - Any participant-facing (non-admin) version. Emails stay admin-only.
+- Exact "last activity" tracking (logins, unmarks, flag edits) — see §4 and
+  §11.
 - A tap-to-open affordance on touch devices (§7).
 - Showing the same tooltip elsewhere (Budget split, payment board).
 
@@ -57,7 +63,7 @@ branch.
 
 ## 4. Data
 
-No schema or query changes.
+No schema changes.
 
 - **Email** — `Participant.email` from `listParticipants` (`lib/events.ts`),
   already joined from `users`.
@@ -66,7 +72,18 @@ No schema or query changes.
   `listEventCompanions` for the Budget tab; it is now also passed to
   `DatesTab` as a new `companions: Companion[]` prop.
 
-The count is keyed on `host_user_id`, so the creator's companions are counted
+- **Last vote** — the latest `availabilities.created_at` among the user's
+  rows for this event. `listAvailability` (`lib/events.ts`) now also selects
+  `created_at` (exposed as `AvailabilityEntry.createdAt`), and `DatesTab`
+  reduces it to a `lastVoteByUser` map next to the existing `votesByUser`.
+
+  **This is the latest *surviving* mark, not the latest action.** Unmarking a
+  day deletes its row (`toggleAvailability`), as do the admin's "clear votes"
+  and "remove vote". So unmarking never counts as activity, and a user who
+  unmarked everything reads as "never voted". The label says "last vote", not
+  "last activity", to stay honest about that.
+
+The companion count is keyed on `host_user_id`, so the creator's companions are counted
 even if they have no membership row (`companions.md` §9).
 
 ## 5. Behavior
@@ -74,11 +91,17 @@ even if they have no membership row (`companions.md` §9).
 - **Trigger:** the participant's display name (`name ?? email`, plus the
   "(creator)" suffix). Not the whole row — the row holds action buttons that
   have their own tooltips/dialogs.
-- **Content**, two lines:
+- **Content**, three lines:
   1. the email, verbatim (user data, never translated or truncated by
      the app; the tooltip's `max-w-xs` wraps it);
   2. the companion count, pluralized: "Sem acompanhantes" / "1 acompanhante" /
-     "3 acompanhantes".
+     "3 acompanhantes";
+  3. "Último voto: 13/10/2026, 14:32", or "Nunca votou" when the user has no
+     marked days. Formatted with `formatDateTime` (`lib/format.ts`): the
+     active locale's short date + time, **pinned to `America/Sao_Paulo`** —
+     the page renders on the server (UTC in production), and a fixed zone
+     means every admin reads the same wall-clock time, the same way BRL
+     formatting is fixed ([`i18n.md`](./i18n.md)).
 - The email line is shown **even when the display name already is the email**
   (user without a name). Redundant but consistent; one rendering path.
 - **Keyboard:** the trigger is focusable (Base UI `TooltipTrigger` rendered as
@@ -102,6 +125,7 @@ Participants
    ┌───────────────────────┐
    │ ana.souza@gmail.com   │
    │ 2 acompanhantes       │
+   │ Último voto: 13/10/2026, 14:32 │
    └──────────┬────────────┘
 ```
 
@@ -119,6 +143,8 @@ New keys in the **`event`** namespace, all four locales (`pt-BR`, `en`, `bs`,
 - `participantCompanions_zero` / `_one` / `_other` — "No companions" /
   "{{count}} companion" / "{{count}} companions" (and locale equivalents;
   `zh-CN` only needs `_other` + `_zero`, as usual for i18next).
+- `lastVote` — "Last vote: {{date}}" (`date` is pre-formatted, §5).
+- `neverVoted` — "Never voted".
 
 The email is user data and is never localized.
 
@@ -133,6 +159,14 @@ The email is user data and is never localized.
 - **Reuse the already-loaded `companions`** *(2026-10-13)* rather than adding a
   count to `listParticipants` — one source of truth, zero extra round trips.
 
+- **Last vote = `max(created_at)` of surviving rows** *(2026-10-13)*. Free
+  (no migration, no extra writes) and good enough to spot who went quiet.
+  A tracked `last_voted_at` was considered: it would capture unmarks, but
+  needs a migration plus a write on every toggle, and can't live on
+  `event_memberships` because the creator may have no row there.
+- **São Paulo time, not the viewer's** *(2026-10-13)*. Server-rendered with
+  no client zone available; the group is Brazilian.
+
 ## 10. Open questions
 
 - **Touch support.** If admins turn out to manage events from phones, swap the
@@ -141,3 +175,5 @@ The email is user data and is never localized.
 ## 11. Future work
 
 - The same hover on the Budget tab's split rows and on the payment board.
+- Real last activity: a `users.last_seen_at` bumped on login/middleware, if
+  "last vote" proves too lossy.

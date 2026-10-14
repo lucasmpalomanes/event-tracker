@@ -2,7 +2,7 @@ import type { AvailabilityEntry, EventRow, Participant, PendingRequest } from "@
 import type { ReopenBlocker } from "@/lib/charges";
 import { companionsOf, type Companion } from "@/lib/companions";
 import { holidaysInRange } from "@/lib/holidays";
-import { formatDay, formatMonthYear } from "@/lib/format";
+import { formatDateTime, formatDay, formatMonthYear } from "@/lib/format";
 import { getT } from "@/lib/i18n/server";
 import type { Locale } from "@/lib/i18n/config";
 import {
@@ -118,6 +118,8 @@ export async function DatesTab({
   const counts = new Map<string, number>();
   const voters = new Map<string, { userId: string; name: string }[]>();
   const votesByUser = new Map<string, number>();
+  // Latest surviving vote per user, for the admin hover.
+  const lastVoteByUser = new Map<string, string>();
   const mine = new Set<string>();
   for (const entry of availability) {
     counts.set(entry.day, (counts.get(entry.day) ?? 0) + 1);
@@ -126,6 +128,11 @@ export async function DatesTab({
       { userId: entry.user_id, name: entry.userName },
     ]);
     votesByUser.set(entry.user_id, (votesByUser.get(entry.user_id) ?? 0) + 1);
+    const last = lastVoteByUser.get(entry.user_id);
+    // ISO timestamps from the same column compare correctly as strings.
+    if (!last || entry.createdAt > last) {
+      lastVoteByUser.set(entry.user_id, entry.createdAt);
+    }
     if (entry.user_id === viewerId) mine.add(entry.day);
   }
 
@@ -369,6 +376,7 @@ export async function DatesTab({
             {participants.map((p) => {
               const displayName = p.name ?? p.email;
               const voteCount = votesByUser.get(p.userId) ?? 0;
+              const lastVote = lastVoteByUser.get(p.userId);
               return (
                 <li
                   key={p.userId}
@@ -399,6 +407,13 @@ export async function DatesTab({
                         {t("participantCompanions", {
                           count: companionsOf(companions, p.userId).length,
                         })}
+                      </span>
+                      <span>
+                        {lastVote
+                          ? t("lastVote", {
+                              date: formatDateTime(lastVote, locale),
+                            })
+                          : t("neverVoted")}
                       </span>
                     </TooltipContent>
                   </Tooltip>

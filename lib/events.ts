@@ -210,6 +210,9 @@ export type AvailabilityEntry = {
   day: string;
   user_id: string;
   userName: string;
+  // When the day was marked; unmarking deletes the row, so the latest one is
+  // only an approximation of last activity (specs/participant-hover.md §4).
+  createdAt: string;
 };
 
 // Every marked day for the event, with who marked it (for the ranking
@@ -220,7 +223,7 @@ export async function listAvailability(
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from("availabilities")
-    .select("day, user_id, users ( name, email )")
+    .select("day, user_id, created_at, users ( name, email )")
     .eq("event_id", eventId);
   if (error) {
     throw new Error(`Failed to load availability: ${error.message}`);
@@ -231,6 +234,7 @@ export async function listAvailability(
       day: row.day as string,
       user_id: row.user_id as string,
       userName: u?.name ?? u?.email ?? "?",
+      createdAt: row.created_at as string,
     };
   });
 }
