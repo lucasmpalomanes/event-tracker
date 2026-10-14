@@ -75,6 +75,9 @@
   },
   "participants": "Participantes",
   "creator": "(criador)",
+  "participantCompanions_zero": "Sem acompanhantes",
+  "participantCompanions_one": "{{count}} acompanhante",
+  "participantCompanions_other": "{{count}} acompanhantes",
   "clearVotes": {
     "label": "Limpar votos",
     "title": "Limpar votos?",

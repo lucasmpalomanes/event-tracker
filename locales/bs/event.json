@@ -77,6 +77,10 @@
   },
   "participants": "Učesnici",
   "creator": "(kreator)",
+  "participantCompanions_zero": "Bez pratilaca",
+  "participantCompanions_one": "{{count}} pratilac",
+  "participantCompanions_few": "{{count}} pratioca",
+  "participantCompanions_other": "{{count}} pratilaca",
   "clearVotes": {
     "label": "Obriši glasove",
     "title": "Obrisati glasove?",

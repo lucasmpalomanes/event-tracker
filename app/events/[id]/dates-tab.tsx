@@ -1,5 +1,6 @@
 import type { AvailabilityEntry, EventRow, Participant, PendingRequest } from "@/lib/events";
 import type { ReopenBlocker } from "@/lib/charges";
+import { companionsOf, type Companion } from "@/lib/companions";
 import { holidaysInRange } from "@/lib/holidays";
 import { formatDay, formatMonthYear } from "@/lib/format";
 import { getT } from "@/lib/i18n/server";
@@ -22,6 +23,11 @@ import {
 } from "@/components/voting-calendar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Build one grid per calendar month covered by the window. Days outside
 // the window are rendered but non-interactive (specs/spec.md §5.2).
@@ -84,6 +90,7 @@ export async function DatesTab({
   isAdmin,
   pendingRequests,
   participants,
+  companions,
   availability,
   reopenBlockedBy,
 }: {
@@ -92,6 +99,8 @@ export async function DatesTab({
   isAdmin: boolean;
   pendingRequests: PendingRequest[];
   participants: Participant[];
+  // Only counted, for the admin list's hover (specs/participant-hover.md §4).
+  companions: Companion[];
   availability: AvailabilityEntry[];
   // What stops a finalized event from reopening (specs/reopen-finalized.md §4).
   reopenBlockedBy: ReopenBlocker | null;
@@ -365,14 +374,34 @@ export async function DatesTab({
                   key={p.userId}
                   className="flex items-center gap-3 text-sm"
                 >
-                  <span>
-                    {displayName}
-                    {p.isCreator && (
-                      <span className="ml-1 text-xs text-muted-foreground">
-                        {t("creator")}
+                  {/* Email + companion count on hover/focus; rendered only
+                      here, inside the admin branch, so emails never reach
+                      non-admin HTML (specs/participant-hover.md §3). */}
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <span
+                          tabIndex={0}
+                          className="cursor-default underline decoration-dotted underline-offset-4"
+                        />
+                      }
+                    >
+                      {displayName}
+                      {p.isCreator && (
+                        <span className="ml-1 text-xs text-muted-foreground">
+                          {t("creator")}
+                        </span>
+                      )}
+                    </TooltipTrigger>
+                    <TooltipContent className="flex-col items-start gap-0.5">
+                      <span className="break-all">{p.email}</span>
+                      <span>
+                        {t("participantCompanions", {
+                          count: companionsOf(companions, p.userId).length,
+                        })}
                       </span>
-                    )}
-                  </span>
+                    </TooltipContent>
+                  </Tooltip>
                   <span className="flex-1 text-xs text-muted-foreground">
                     {t("votes", { count: voteCount })}
                   </span>
